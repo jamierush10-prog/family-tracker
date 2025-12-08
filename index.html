@@ -177,15 +177,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // --- PASTE YOUR FIREBASE CONFIG HERE ---
+    // --- YOUR KEYS ARE NOW INSERTED HERE ---
     const firebaseConfig = {
-  apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
-  authDomain: "family-wealth-tracker-18699.firebaseapp.com",
-  projectId: "family-wealth-tracker-18699",
-  storageBucket: "family-wealth-tracker-18699.firebasestorage.app",
-  messagingSenderId: "162214392302",
-  appId: "1:162214392302:web:3e40142cbed3df59fbdeff"
-};
+        apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
+        authDomain: "family-wealth-tracker-18699.firebaseapp.com",
+        projectId: "family-wealth-tracker-18699",
+        storageBucket: "family-wealth-tracker-18699.firebasestorage.app",
+        messagingSenderId: "162214392302",
+        appId: "1:162214392302:web:3e40142cbed3df59fbdeff"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
