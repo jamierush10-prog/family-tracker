@@ -16,7 +16,6 @@
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .dashboard { width: 100%; max-width: 650px; }
         
-        /* Summary Card */
         .summary-card { background-color: var(--card-bg); padding: 30px 25px; border-radius: 16px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); position: relative; }
         .filter-row { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
         .date-select { background: var(--bg-color); color: var(--text-muted); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
@@ -29,13 +28,11 @@
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
         .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); } .text-orange { color: var(--accent-orange); }
 
-        /* Headers & Buttons */
         .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 35px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .section-header h3 { margin: 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main); }
         .section-sub { font-size: 0.85rem; color: var(--text-muted); }
         .btn-mini { background: var(--input-bg); border: none; color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: 10px; }
 
-        /* Vault Cards */
         .tracker-grid { display: grid; gap: 12px; }
         .tracker-card { background-color: var(--card-bg); padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: background 0.2s; }
         .tracker-card:active { background-color: #263345; }
@@ -54,7 +51,6 @@
         .vault-history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; color: var(--text-muted); }
         .vault-history-item:last-child { border-bottom: none; }
 
-        /* Logs & Modals */
         .log-list { list-style: none; padding: 0; margin: 0; }
         .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
         .log-item:active { background-color: #263345; }
@@ -161,12 +157,17 @@
 
 <div class="modal-overlay" id="transferModal">
     <div class="modal-card">
-        <h2 style="margin-top:0; font-size:1.2rem;">Vault Transfer</h2>
+        <h2 style="margin-top:0; font-size:1.2rem;" id="transferTitle">Vault Transfer</h2>
         <div style="color: var(--text-muted); font-size:0.9rem; margin-bottom:15px;" id="transferTargetName"></div>
         <input type="hidden" id="transferProjectId">
+        
+        <div class="form-group"><label class="form-label">Date</label><input type="date" id="transferDate"></div>
+        
         <div class="form-group"><label class="form-label">Action</label><select id="transferDir"><option value="in">🔒 Deposit to Vault (Reduces Operating Cash)</option><option value="out">🔓 Withdraw to Cash (Increases Operating Cash)</option></select></div>
         <div class="form-group"><label class="form-label">Amount</label><input type="number" id="transferAmount" placeholder="0.00"></div>
-        <button class="btn-primary" onclick="executeTransfer()">Confirm Transfer</button>
+        
+        <button id="btnTransferSave" class="btn-primary" onclick="executeTransfer()">Confirm Transfer</button>
+        <button id="btnTransferDelete" class="btn-delete" onclick="deleteTransfer()">Delete Transfer</button>
         <button class="btn-text" onclick="document.getElementById('transferModal').style.display='none'">Cancel</button>
     </div>
 </div>
@@ -184,7 +185,7 @@
 <script type="module">
     // --- FIREBASE SETUP ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
@@ -229,7 +230,6 @@
     window.render = function() {
         const dateRange = getDateRange();
         
-        // Math
         let currentBalance = 0;
         localState.transactions.forEach(t => {
             if (t.type === 'income') currentBalance += t.amount;
@@ -305,7 +305,7 @@
         });
         document.getElementById('displayVaultTotal').innerText = formatMoney(totalVaulted);
 
-        // Logs (Clickable)
+        // Logs
         const logList = document.getElementById('transactionList');
         logList.innerHTML = '';
         if(filteredTrans.length === 0) logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions</li>';
@@ -324,9 +324,8 @@
                 metaString = `<span style="opacity:0.6">${catString}</span>`;
             }
             
-            // Add click listener for edit
             logList.innerHTML += `
-                <li class="log-item" onclick="editTransaction('${t.id}')">
+                <li class="log-item" onclick="routeEdit('${t.id}')">
                     <div class="log-left">
                         <div class="log-payee">${t.payee}</div>
                         <div class="log-meta"><span>${t.date}</span> &bull; ${metaString}</div>
@@ -336,7 +335,13 @@
         });
     }
 
-    // --- LOGIC FUNCTIONS ---
+    // --- UTILS ---
+    window.getLocalDate = function() {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0,10);
+    }
+
     window.updateCategoryDropdowns = function() {
         const selects = document.querySelectorAll('select[id="inputCategory"], .split-cat-select');
         selects.forEach(sel => {
@@ -360,16 +365,26 @@
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
-    // --- EDIT & DELETE LOGIC ---
+    // --- EDIT ROUTING ---
+    window.routeEdit = function(id) {
+        const t = localState.transactions.find(x => x.id === id);
+        if(!t) return;
+        if(t.type === 'transfer') {
+            editTransfer(t);
+        } else {
+            editTransaction(t);
+        }
+    }
+
+    // --- STANDARD TRANSACTION EDITING ---
     window.openMainModal = function() {
         editingId = null;
         document.getElementById('modalTitle').innerText = "New Transaction";
         document.getElementById('btnSave').innerText = "Save Record";
         document.getElementById('btnDelete').style.display = 'none';
         
-        // Reset Form
         document.getElementById('inputType').value = 'expense';
-        document.getElementById('inputDate').valueAsDate = new Date();
+        document.getElementById('inputDate').value = getLocalDate(); // FIXED DATE
         document.getElementById('inputAmount').value = '';
         document.getElementById('inputPayee').value = '';
         document.getElementById('inputPurpose').value = '';
@@ -380,31 +395,23 @@
         document.getElementById('mainModal').style.display = 'flex';
     }
 
-    window.editTransaction = function(id) {
-        const t = localState.transactions.find(x => x.id === id);
-        if(!t) return;
-        
-        editingId = id;
+    window.editTransaction = function(t) {
+        editingId = t.id;
         document.getElementById('modalTitle').innerText = "Edit Transaction";
         document.getElementById('btnSave').innerText = "Update Transaction";
         document.getElementById('btnDelete').style.display = 'block';
 
-        // Fill Form
         document.getElementById('inputType').value = t.type;
         document.getElementById('inputDate').value = t.date;
         document.getElementById('inputAmount').value = t.amount;
         document.getElementById('inputPayee').value = t.payee;
         document.getElementById('inputPurpose').value = t.purpose || '';
         
-        // Handle Split/Category
         if(t.categories && t.categories.length > 1) {
             document.getElementById('toggleSplit').checked = true;
             window.toggleSplitMode();
-            document.getElementById('splitRows').innerHTML = ''; // Clear old
+            document.getElementById('splitRows').innerHTML = ''; 
             t.categories.forEach(c => {
-               // Recreate rows with data (simplified for this update)
-               // For basic edit, resetting split to first cat might be safer UI-wise if logic is complex
-               // But let's try to load:
                let options = '<option value="Uncategorized">Select...</option>';
                localState.categories.forEach(cat => options += `<option value="${cat}">${cat}</option>`);
                document.getElementById('splitRows').innerHTML += `
@@ -413,7 +420,6 @@
                     <input type="number" class="split-cat-pct" placeholder="%" style="flex:1;" value="${c.pct}">
                     <button type="button" class="btn-small" onclick="this.parentElement.remove()">x</button>
                 </div>`;
-                // Set value after creating (hacky but works for generated HTML)
                 const rows = document.querySelectorAll('.split-row');
                 rows[rows.length-1].querySelector('select').value = c.name;
             });
@@ -424,16 +430,7 @@
                 document.getElementById('inputCategory').value = t.categories[0].name;
             }
         }
-
         document.getElementById('mainModal').style.display = 'flex';
-    }
-
-    window.deleteTransaction = async function() {
-        if(!editingId) return;
-        if(confirm("Are you sure you want to delete this record?")) {
-            await deleteDoc(doc(db, "transactions", editingId));
-            closeMainModal();
-        }
     }
 
     window.saveTransaction = async function() {
@@ -473,8 +470,121 @@
                 data.createdAt = new Date().toISOString();
                 await addDoc(collection(db, "transactions"), data);
             }
-            closeMainModal();
+            document.getElementById('mainModal').style.display = 'none';
         } catch (e) { alert("Error saving: " + e.message); }
+    }
+
+    window.deleteTransaction = async function() {
+        if(!editingId) return;
+        if(confirm("Delete this record?")) {
+            await deleteDoc(doc(db, "transactions", editingId));
+            document.getElementById('mainModal').style.display = 'none';
+        }
+    }
+
+    // --- VAULT TRANSFER EDITING ---
+    window.openTransferModal = function(id, name, dir) {
+        editingId = null;
+        document.getElementById('transferTitle').innerText = "Vault Transfer";
+        document.getElementById('btnTransferSave').innerText = "Confirm Transfer";
+        document.getElementById('btnTransferDelete').style.display = 'none';
+        
+        document.getElementById('transferProjectId').value = id;
+        document.getElementById('transferTargetName').innerText = `Transferring for: ${name}`;
+        if(dir) document.getElementById('transferDir').value = dir;
+        document.getElementById('transferDate').value = getLocalDate(); // FIXED DATE
+        document.getElementById('transferAmount').value = '';
+        
+        document.getElementById('transferModal').style.display = 'flex';
+    }
+
+    window.editTransfer = function(t) {
+        editingId = t.id;
+        document.getElementById('transferTitle').innerText = "Edit Transfer";
+        document.getElementById('btnTransferSave').innerText = "Update Transfer";
+        document.getElementById('btnTransferDelete').style.display = 'block';
+
+        document.getElementById('transferProjectId').value = t.vaultId;
+        // Find vault name
+        const v = localState.vaults.find(x => x.id === t.vaultId);
+        document.getElementById('transferTargetName').innerText = v ? `Transferring for: ${v.name}` : 'Unknown Vault';
+        
+        document.getElementById('transferDir').value = t.transferDir;
+        document.getElementById('transferDate').value = t.date;
+        document.getElementById('transferAmount').value = t.amount;
+        
+        document.getElementById('transferModal').style.display = 'flex';
+    }
+
+    window.executeTransfer = async function() {
+        const id = document.getElementById('transferProjectId').value;
+        const amount = parseFloat(document.getElementById('transferAmount').value);
+        const dir = document.getElementById('transferDir').value;
+        const date = document.getElementById('transferDate').value;
+        if(!amount) return;
+
+        const project = localState.vaults.find(v => v.id === id);
+        if(!project) return;
+        
+        try {
+            // IF EDITING: Revert old math first
+            let currentVaultBalance = project.current;
+            if(editingId) {
+                const oldT = localState.transactions.find(x => x.id === editingId);
+                if(oldT) {
+                    // Reverse old: if in, subtract. if out, add.
+                    if(oldT.transferDir === 'in') currentVaultBalance -= oldT.amount;
+                    else currentVaultBalance += oldT.amount;
+                }
+            }
+
+            // Apply NEW math
+            if(dir === 'in') currentVaultBalance += amount;
+            else currentVaultBalance -= amount;
+
+            // Save Vault
+            await updateDoc(doc(db, "vaults", id), { current: currentVaultBalance });
+            
+            // Save Transaction
+            const data = {
+                date: date,
+                payee: (dir === 'in' ? "To Vault: " : "From Vault: ") + project.name,
+                amount: amount,
+                type: 'transfer',
+                transferDir: dir,
+                vaultId: id, 
+                categories: [{name: 'Transfer', pct: 100}]
+            };
+
+            if(editingId) {
+                await updateDoc(doc(db, "transactions", editingId), data);
+            } else {
+                data.createdAt = new Date().toISOString();
+                await addDoc(collection(db, "transactions"), data);
+            }
+            
+            document.getElementById('transferModal').style.display = 'none';
+        } catch(e) { alert("Transfer failed: " + e.message); }
+    }
+
+    window.deleteTransfer = async function() {
+        if(!editingId) return;
+        if(!confirm("Delete this transfer and revert balance?")) return;
+
+        const t = localState.transactions.find(x => x.id === editingId);
+        const v = localState.vaults.find(x => x.id === t.vaultId);
+        
+        if(t && v) {
+            let newBalance = v.current;
+            // Reverse math
+            if(t.transferDir === 'in') newBalance -= t.amount;
+            else newBalance += t.amount;
+            
+            await updateDoc(doc(db, "vaults", v.id), { current: newBalance });
+        }
+        
+        await deleteDoc(doc(db, "transactions", editingId));
+        document.getElementById('transferModal').style.display = 'none';
     }
 
     window.createNewProject = async function() {
@@ -485,35 +595,6 @@
             await addDoc(collection(db, "vaults"), { name, current: 0, goal });
             document.getElementById('newProjectModal').style.display = 'none';
         } catch(e) { console.error(e); }
-    }
-
-    window.executeTransfer = async function() {
-        const id = document.getElementById('transferProjectId').value;
-        const amount = parseFloat(document.getElementById('transferAmount').value);
-        const dir = document.getElementById('transferDir').value;
-        if(!amount) return;
-
-        const project = localState.vaults.find(v => v.id === id);
-        if(!project) return;
-        
-        let newCurrent = project.current;
-        if(dir === 'in') newCurrent += amount;
-        else newCurrent -= amount;
-
-        try {
-            await updateDoc(doc(db, "vaults", id), { current: newCurrent });
-            await addDoc(collection(db, "transactions"), {
-                date: new Date().toISOString().split('T')[0],
-                payee: (dir === 'in' ? "To Vault: " : "From Vault: ") + project.name,
-                amount: amount,
-                type: 'transfer',
-                transferDir: dir,
-                vaultId: id, 
-                categories: [{name: 'Transfer', pct: 100}]
-            });
-            document.getElementById('transferModal').style.display = 'none';
-            document.getElementById('transferAmount').value = '';
-        } catch(e) { alert("Transfer failed"); }
     }
 
     // --- HELPERS ---
@@ -560,16 +641,10 @@
             </div>`;
     }
     window.openNewProjectModal = function() { document.getElementById('newProjectModal').style.display = 'flex'; }
-    window.openTransferModal = function(id, name, dir) {
-        document.getElementById('transferProjectId').value = id;
-        document.getElementById('transferTargetName').innerText = `Transferring for: ${name}`;
-        if(dir) document.getElementById('transferDir').value = dir;
-        document.getElementById('transferModal').style.display = 'flex';
-    }
     
     // Init
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('inputDate').valueAsDate = new Date();
+        document.getElementById('inputDate').value = getLocalDate();
         window.toggleSplitMode();
     });
 </script>
