@@ -35,7 +35,7 @@
         .section-sub { font-size: 0.85rem; color: var(--text-muted); }
         .btn-mini { background: var(--input-bg); border: none; color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: 10px; }
 
-        /* Vault Cards (Expanded Styles) */
+        /* Vault Cards */
         .tracker-grid { display: grid; gap: 12px; }
         .tracker-card { background-color: var(--card-bg); padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: background 0.2s; }
         .tracker-card:active { background-color: #263345; }
@@ -45,7 +45,6 @@
         .tracker-bar-bg { height: 8px; background-color: var(--input-bg); border-radius: 4px; overflow: hidden; margin-top: 5px;}
         .tracker-bar-fill { height: 100%; background-color: var(--accent-blue); width: 0%; transition: width 0.6s ease; }
         
-        /* Vault History (Hidden by default) */
         .vault-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
         .vault-actions { display: flex; gap: 10px; margin-bottom: 15px; }
         .btn-vault-action { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
@@ -57,7 +56,8 @@
 
         /* Logs & Modals */
         .log-list { list-style: none; padding: 0; margin: 0; }
-        .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+        .log-item:active { background-color: #263345; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
@@ -71,6 +71,7 @@
         .form-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
         input, select { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--border-color); color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
         .btn-primary { background: var(--text-main); color: var(--bg-color); width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-delete { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none; }
         .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; width: 100%; margin-top: 15px; }
         .split-container { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 10px; }
         .split-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
@@ -126,6 +127,7 @@
     <div class="section-header">
         <h3>Transaction Log</h3>
     </div>
+    <div style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a transaction to edit or delete</div>
     <ul class="log-list" id="transactionList"></ul>
 </div>
 
@@ -133,29 +135,26 @@
 
 <div class="modal-overlay" id="mainModal">
     <div class="modal-card">
-        <h2 style="margin-top:0; font-size:1.2rem;">New Transaction</h2>
+        <h2 style="margin-top:0; font-size:1.2rem;" id="modalTitle">New Transaction</h2>
         <div class="form-row">
             <div><label class="form-label">Type</label><select id="inputType"><option value="expense">Expense (Out)</option><option value="income">Income (In)</option></select></div>
             <div><label class="form-label">Date</label><input type="date" id="inputDate"></div>
         </div>
         <div class="form-group"><label class="form-label">Amount</label><input type="number" id="inputAmount" placeholder="0.00" step="0.01"></div>
         <div class="form-group"><label class="form-label">Payee</label><input type="text" id="inputPayee" placeholder="e.g. Costco"></div>
-        
         <div class="form-group"><label class="form-label">For (Memo)</label><input type="text" id="inputPurpose" placeholder="e.g. Weekly Groceries"></div>
 
         <div class="form-group">
             <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><label class="form-label">Category</label><label class="form-label" style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="toggleSplit" style="width:auto;" onchange="toggleSplitMode()"> Split?</label></div>
-            
             <div id="singleCategoryMode" style="display:flex; gap:10px;">
-                <select id="inputCategory" style="flex:1;">
-                    <option value="Uncategorized">Select...</option>
-                    </select>
+                <select id="inputCategory" style="flex:1;"><option value="Uncategorized">Select...</option></select>
                 <button class="btn-small" onclick="addNewCategory()">+ New</button>
             </div>
-            
             <div id="splitCategoryMode" class="split-container" style="display:none;"><div id="splitRows"></div><button type="button" class="btn-small" onclick="addSplitRow()">+ Split</button></div>
         </div>
-        <button class="btn-primary" onclick="saveTransaction()">Save Record</button>
+        
+        <button id="btnSave" class="btn-primary" onclick="saveTransaction()">Save Record</button>
+        <button id="btnDelete" class="btn-delete" onclick="deleteTransaction()">Delete Record</button>
         <button class="btn-text" onclick="closeMainModal()">Cancel</button>
     </div>
 </div>
@@ -185,7 +184,7 @@
 <script type="module">
     // --- FIREBASE SETUP ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
@@ -200,31 +199,25 @@
     const db = getFirestore(app);
 
     let localState = { transactions: [], vaults: [], categories: [] };
-    
-    // Initial Seed Categories (only used if DB is empty)
+    let editingId = null; // Tracks if we are editing
     const DEFAULT_CATS = ["Groceries", "Dining", "Housing", "Utilities", "Transport", "Entertainment", "Shopping", "Health"];
 
     // --- LISTENERS ---
-    
-    // 1. Transactions
     const q = query(collection(db, "transactions"), orderBy("date", "desc"));
     onSnapshot(q, (snapshot) => {
         localState.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     });
 
-    // 2. Vaults
     const qVaults = query(collection(db, "vaults"));
     onSnapshot(qVaults, (snapshot) => {
         localState.vaults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     });
 
-    // 3. Categories (New)
     const qCats = query(collection(db, "categories"), orderBy("name"));
     onSnapshot(qCats, async (snapshot) => {
         if (snapshot.empty) {
-            // Seed defaults if empty
             DEFAULT_CATS.forEach(async c => await addDoc(collection(db, "categories"), { name: c }));
         } else {
             localState.categories = snapshot.docs.map(doc => doc.data().name);
@@ -236,6 +229,7 @@
     window.render = function() {
         const dateRange = getDateRange();
         
+        // Math
         let currentBalance = 0;
         localState.transactions.forEach(t => {
             if (t.type === 'income') currentBalance += t.amount;
@@ -274,7 +268,7 @@
         else { vaultEl.textContent = '$0.00'; }
         vaultEl.className = ''; 
 
-        // Render Vaults
+        // Vaults
         const trackerList = document.getElementById('trackerList');
         trackerList.innerHTML = '';
         let totalVaulted = 0;
@@ -305,14 +299,13 @@
                             <button class="btn-vault-action btn-deposit" onclick="openTransferModal('${v.id}', '${v.name}', 'in')">Deposit (+)</button>
                             <button class="btn-vault-action btn-withdraw" onclick="openTransferModal('${v.id}', '${v.name}', 'out')">Withdraw (-)</button>
                         </div>
-                        <div style="font-size:0.75rem; text-transform:uppercase; color:#666; margin-bottom:5px;">Recent Activity</div>
                         <ul class="vault-history-list">${historyHTML.length > 0 ? historyHTML : '<li class="vault-history-item">No history yet</li>'}</ul>
                     </div>
                 </div>`;
         });
         document.getElementById('displayVaultTotal').innerText = formatMoney(totalVaulted);
 
-        // Render Log with "For/Memo"
+        // Logs (Clickable)
         const logList = document.getElementById('transactionList');
         logList.innerHTML = '';
         if(filteredTrans.length === 0) logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions</li>';
@@ -323,7 +316,6 @@
             if(t.type === 'expense') { colorClass = 'text-red'; sign = '-'; }
             if(t.type === 'transfer') { colorClass = 'text-orange'; sign = ''; } 
             
-            // Format: Category (Purpose)
             let catString = t.categories ? t.categories.map(c => c.name).join(', ') : '';
             let metaString = catString;
             if (t.purpose && t.purpose.trim() !== "") {
@@ -332,8 +324,9 @@
                 metaString = `<span style="opacity:0.6">${catString}</span>`;
             }
             
+            // Add click listener for edit
             logList.innerHTML += `
-                <li class="log-item">
+                <li class="log-item" onclick="editTransaction('${t.id}')">
                     <div class="log-left">
                         <div class="log-payee">${t.payee}</div>
                         <div class="log-meta"><span>${t.date}</span> &bull; ${metaString}</div>
@@ -347,19 +340,16 @@
     window.updateCategoryDropdowns = function() {
         const selects = document.querySelectorAll('select[id="inputCategory"], .split-cat-select');
         selects.forEach(sel => {
-            const currentVal = sel.value; // Try to keep selection
+            const currentVal = sel.value; 
             sel.innerHTML = '<option value="Uncategorized">Select...</option>';
-            localState.categories.forEach(cat => {
-                sel.innerHTML += `<option value="${cat}">${cat}</option>`;
-            });
-            if (currentVal) sel.value = currentVal;
+            localState.categories.forEach(cat => { sel.innerHTML += `<option value="${cat}">${cat}</option>`; });
+            if (currentVal && currentVal !== 'Uncategorized') sel.value = currentVal;
         });
     }
 
     window.addNewCategory = async function() {
         const name = prompt("Enter new category name:");
         if (name && name.trim() !== "") {
-            // Save to DB (Listener will update UI)
             await addDoc(collection(db, "categories"), { name: name.trim() });
         }
     }
@@ -370,12 +360,88 @@
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
+    // --- EDIT & DELETE LOGIC ---
+    window.openMainModal = function() {
+        editingId = null;
+        document.getElementById('modalTitle').innerText = "New Transaction";
+        document.getElementById('btnSave').innerText = "Save Record";
+        document.getElementById('btnDelete').style.display = 'none';
+        
+        // Reset Form
+        document.getElementById('inputType').value = 'expense';
+        document.getElementById('inputDate').valueAsDate = new Date();
+        document.getElementById('inputAmount').value = '';
+        document.getElementById('inputPayee').value = '';
+        document.getElementById('inputPurpose').value = '';
+        document.getElementById('inputCategory').value = 'Uncategorized';
+        document.getElementById('toggleSplit').checked = false;
+        window.toggleSplitMode();
+        
+        document.getElementById('mainModal').style.display = 'flex';
+    }
+
+    window.editTransaction = function(id) {
+        const t = localState.transactions.find(x => x.id === id);
+        if(!t) return;
+        
+        editingId = id;
+        document.getElementById('modalTitle').innerText = "Edit Transaction";
+        document.getElementById('btnSave').innerText = "Update Transaction";
+        document.getElementById('btnDelete').style.display = 'block';
+
+        // Fill Form
+        document.getElementById('inputType').value = t.type;
+        document.getElementById('inputDate').value = t.date;
+        document.getElementById('inputAmount').value = t.amount;
+        document.getElementById('inputPayee').value = t.payee;
+        document.getElementById('inputPurpose').value = t.purpose || '';
+        
+        // Handle Split/Category
+        if(t.categories && t.categories.length > 1) {
+            document.getElementById('toggleSplit').checked = true;
+            window.toggleSplitMode();
+            document.getElementById('splitRows').innerHTML = ''; // Clear old
+            t.categories.forEach(c => {
+               // Recreate rows with data (simplified for this update)
+               // For basic edit, resetting split to first cat might be safer UI-wise if logic is complex
+               // But let's try to load:
+               let options = '<option value="Uncategorized">Select...</option>';
+               localState.categories.forEach(cat => options += `<option value="${cat}">${cat}</option>`);
+               document.getElementById('splitRows').innerHTML += `
+                <div class="split-row">
+                    <select class="split-cat-select" style="flex:2;">${options}</select>
+                    <input type="number" class="split-cat-pct" placeholder="%" style="flex:1;" value="${c.pct}">
+                    <button type="button" class="btn-small" onclick="this.parentElement.remove()">x</button>
+                </div>`;
+                // Set value after creating (hacky but works for generated HTML)
+                const rows = document.querySelectorAll('.split-row');
+                rows[rows.length-1].querySelector('select').value = c.name;
+            });
+        } else {
+            document.getElementById('toggleSplit').checked = false;
+            window.toggleSplitMode();
+            if(t.categories && t.categories.length > 0) {
+                document.getElementById('inputCategory').value = t.categories[0].name;
+            }
+        }
+
+        document.getElementById('mainModal').style.display = 'flex';
+    }
+
+    window.deleteTransaction = async function() {
+        if(!editingId) return;
+        if(confirm("Are you sure you want to delete this record?")) {
+            await deleteDoc(doc(db, "transactions", editingId));
+            closeMainModal();
+        }
+    }
+
     window.saveTransaction = async function() {
         const type = document.getElementById('inputType').value;
         const date = document.getElementById('inputDate').value;
         const amount = parseFloat(document.getElementById('inputAmount').value);
         const payee = document.getElementById('inputPayee').value;
-        const purpose = document.getElementById('inputPurpose').value; // New Field
+        const purpose = document.getElementById('inputPurpose').value;
         const isSplit = document.getElementById('toggleSplit').checked;
 
         if(!amount || !payee || !date) return alert("Fill all fields");
@@ -395,15 +461,19 @@
             if(Math.abs(totalPct - 100) > 0.1) return alert(`Split percentages sum to ${totalPct}%. They must total 100%.`);
         }
 
+        const data = {
+            date, payee, purpose, amount, type, categories,
+            updatedAt: new Date().toISOString()
+        };
+
         try {
-            await addDoc(collection(db, "transactions"), {
-                date, payee, purpose, amount, type, categories,
-                createdAt: new Date().toISOString()
-            });
+            if(editingId) {
+                await updateDoc(doc(db, "transactions", editingId), data);
+            } else {
+                data.createdAt = new Date().toISOString();
+                await addDoc(collection(db, "transactions"), data);
+            }
             closeMainModal();
-            document.getElementById('inputAmount').value = '';
-            document.getElementById('inputPayee').value = '';
-            document.getElementById('inputPurpose').value = '';
         } catch (e) { alert("Error saving: " + e.message); }
     }
 
@@ -473,18 +543,15 @@
         return { start, end };
     }
     window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
-    window.openMainModal = function() { document.getElementById('mainModal').style.display = 'flex'; }
     window.closeMainModal = function() { document.getElementById('mainModal').style.display = 'none'; }
     window.toggleSplitMode = function() {
         const isSplit = document.getElementById('toggleSplit').checked;
-        document.getElementById('singleCategoryMode').style.display = isSplit ? 'none' : 'flex'; // Changed to flex to align button
+        document.getElementById('singleCategoryMode').style.display = isSplit ? 'none' : 'flex';
         document.getElementById('splitCategoryMode').style.display = isSplit ? 'block' : 'none';
     }
     window.addSplitRow = function() {
-        // Now uses dynamic categories
         let options = '<option value="Uncategorized">Select...</option>';
         localState.categories.forEach(cat => options += `<option value="${cat}">${cat}</option>`);
-        
         document.getElementById('splitRows').innerHTML += `
             <div class="split-row">
                 <select class="split-cat-select" style="flex:2;">${options}</select>
@@ -503,7 +570,7 @@
     // Init
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('inputDate').valueAsDate = new Date();
-        window.toggleSplitMode(); // set initial state
+        window.toggleSplitMode();
     });
 </script>
 
