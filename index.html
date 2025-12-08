@@ -101,8 +101,9 @@
 <div class="dashboard">
     <div class="global-filter">
         <select id="dateFilter" class="date-select" onchange="handleDateFilterChange()">
+            <option value="all" selected>All Time</option>
             <option value="last7">Last 7 Days</option>
-            <option value="mtd" selected>Month to Date</option>
+            <option value="mtd">Month to Date</option>
             <option value="ytd">Year to Date</option>
             <option value="lastMonth">Last Month</option>
             <option value="custom">Custom Range...</option>
@@ -643,6 +644,10 @@
     }
     window.getDateRange = function() {
         const filter = document.getElementById('dateFilter').value;
+        
+        // NEW: If 'all' is selected, return null (which skips filtering)
+        if (filter === 'all') return null;
+
         const now = new Date(); const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
         let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
         if (filter === 'last7') start.setDate(now.getDate() - 6);
