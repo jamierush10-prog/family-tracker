@@ -6,7 +6,7 @@
     <title>Family Spending Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- CSS STYLES (Identical to previous design) --- */
+        /* --- CSS STYLES --- */
         :root {
             --bg-color: #0f172a; --card-bg: #1e293b; --input-bg: #334155;
             --text-main: #f8fafc; --text-muted: #94a3b8;
@@ -15,6 +15,8 @@
         }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .dashboard { width: 100%; max-width: 650px; }
+        
+        /* Summary Card */
         .summary-card { background-color: var(--card-bg); padding: 30px 25px; border-radius: 16px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); position: relative; }
         .filter-row { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
         .date-select { background: var(--bg-color); color: var(--text-muted); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
@@ -26,24 +28,41 @@
         .flow-item div:first-child { font-size: 0.75rem; color: var(--text-muted); margin-bottom:5px; text-transform: uppercase;}
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
         .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); } .text-orange { color: var(--accent-orange); }
+
+        /* Headers & Buttons */
         .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 35px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .section-header h3 { margin: 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main); }
         .section-sub { font-size: 0.85rem; color: var(--text-muted); }
         .btn-mini { background: var(--input-bg); border: none; color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: 10px; }
+
+        /* Vault Cards (Expanded Styles) */
         .tracker-grid { display: grid; gap: 12px; }
-        .tracker-card { background-color: var(--card-bg); padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .tracker-card { background-color: var(--card-bg); padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: background 0.2s; }
+        .tracker-card:active { background-color: #263345; }
         .tracker-top { display: flex; justify-content: space-between; font-size: 0.95rem; align-items: center; }
         .tracker-name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
         .lock-icon { font-size: 0.8rem; opacity: 0.5; }
-        .tracker-bar-bg { height: 8px; background-color: var(--input-bg); border-radius: 4px; overflow: hidden; }
+        .tracker-bar-bg { height: 8px; background-color: var(--input-bg); border-radius: 4px; overflow: hidden; margin-top: 5px;}
         .tracker-bar-fill { height: 100%; background-color: var(--accent-blue); width: 0%; transition: width 0.6s ease; }
-        .btn-transfer { background: none; border: 1px solid var(--border-color); color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
+        
+        /* Vault History (Hidden by default) */
+        .vault-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        .vault-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-vault-action { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .btn-deposit { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .btn-withdraw { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .vault-history-list { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
+        .vault-history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; color: var(--text-muted); }
+        .vault-history-item:last-child { border-bottom: none; }
+
+        /* Logs & Modals */
         .log-list { list-style: none; padding: 0; margin: 0; }
         .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
         .log-amount { font-weight: 600; font-size: 1rem; }
+        
         .fab { position: fixed; bottom: 30px; right: 30px; background-color: var(--accent-blue); color: white; width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 32px; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 100; }
         .modal-card { background: var(--card-bg); width: 90%; max-width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color); }
@@ -101,6 +120,7 @@
         </div>
         <button class="btn-mini" onclick="openNewProjectModal()">+ Add</button>
     </div>
+    <div style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a vault to view history or withdraw</div>
     <div class="tracker-grid" id="trackerList"></div>
 
     <div class="section-header">
@@ -153,12 +173,12 @@
 </div>
 
 <script type="module">
-    // --- FIREBASE IMPORTS ---
+    // --- FIREBASE SETUP ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // --- FIREBASE CONFIGURATION (PASTE YOUR KEYS HERE) ---
-    const firebaseConfig = {
+    // --- PASTE YOUR FIREBASE CONFIG HERE ---
+   const firebaseConfig = {
   apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
   authDomain: "family-wealth-tracker-18699.firebaseapp.com",
   projectId: "family-wealth-tracker-18699",
@@ -167,51 +187,41 @@
   appId: "1:162214392302:web:3e40142cbed3df59fbdeff"
 };
 
-    // --- INIT APP ---
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- STATE MANAGEMENT ---
-    let localState = {
-        transactions: [],
-        vaults: []
-    };
+    let localState = { transactions: [], vaults: [] };
 
-    // --- REAL-TIME LISTENERS ---
-    
-    // 1. Listen for Transactions
+    // --- LISTENERS ---
     const q = query(collection(db, "transactions"), orderBy("date", "desc"));
     onSnapshot(q, (snapshot) => {
         localState.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     });
 
-    // 2. Listen for Vaults
     const qVaults = query(collection(db, "vaults"));
     onSnapshot(qVaults, (snapshot) => {
         localState.vaults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     });
 
-    // --- FUNCTIONS ---
-    
-    // RENDER (Updated to calculate balance dynamically)
+    // --- RENDER FUNCTION ---
     window.render = function() {
         const dateRange = getDateRange();
         
-        // Calculate CURRENT Total Operating Balance (All time, no filters)
+        // 1. Calculate OPERATING CASH (Total, no date filters)
         let currentBalance = 0;
         localState.transactions.forEach(t => {
             if (t.type === 'income') currentBalance += t.amount;
             if (t.type === 'expense') currentBalance -= t.amount;
             if (t.type === 'transfer') {
-                if(t.transferDir === 'in') currentBalance -= t.amount;
-                if(t.transferDir === 'out') currentBalance += t.amount;
+                if(t.transferDir === 'in') currentBalance -= t.amount; // Moved to vault
+                if(t.transferDir === 'out') currentBalance += t.amount; // Pulled from vault
             }
         });
         document.getElementById('displayBalance').textContent = formatMoney(currentBalance);
 
-        // Filter Transactions for Stats Display
+        // 2. Filter for Stats
         let filteredTrans = localState.transactions;
         if (dateRange) {
             filteredTrans = localState.transactions.filter(t => {
@@ -220,7 +230,7 @@
             });
         }
 
-        // Stats Logic
+        // 3. Stats Logic
         let income = 0; let expense = 0; let netVault = 0;
         filteredTrans.forEach(t => {
             if (t.type === 'income') income += t.amount;
@@ -234,33 +244,61 @@
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
         
+        // Vault Net Display (Green = Savings grew)
         const vaultEl = document.getElementById('displayVaultFlow');
         if (netVault > 0) { vaultEl.textContent = '+' + formatMoney(netVault); vaultEl.className = 'text-green'; }
         else if (netVault < 0) { vaultEl.textContent = formatMoney(netVault).replace('$-', '-$'); vaultEl.className = 'text-red'; }
         else { vaultEl.textContent = '$0.00'; vaultEl.className = 'text-muted'; }
 
-        // Render Vaults
+        // 4. Render Vaults with History
         const trackerList = document.getElementById('trackerList');
         trackerList.innerHTML = '';
         let totalVaulted = 0;
-        localState.vaults.forEach(t => {
-            totalVaulted += t.current;
-            const pct = Math.min(100, (t.current / t.goal) * 100);
+        
+        localState.vaults.forEach(v => {
+            totalVaulted += v.current;
+            const pct = Math.min(100, (v.current / v.goal) * 100);
+            
+            // Filter transactions for this vault
+            const vaultTrans = localState.transactions.filter(t => 
+                t.type === 'transfer' && (t.vaultId === v.id || t.payee.includes(v.name))
+            ).slice(0, 5); // Last 5
+
+            let historyHTML = '';
+            vaultTrans.forEach(vt => {
+                const isDeposit = vt.transferDir === 'in';
+                const color = isDeposit ? 'text-green' : 'text-red';
+                const sign = isDeposit ? '+' : '-';
+                historyHTML += `
+                    <li class="vault-history-item">
+                        <span>${vt.date}</span>
+                        <span class="${color}">${sign}${formatMoney(vt.amount)}</span>
+                    </li>`;
+            });
+
             trackerList.innerHTML += `
-                <div class="tracker-card">
+                <div class="tracker-card" onclick="toggleVaultDetails('${v.id}')">
                     <div class="tracker-top">
-                        <div class="tracker-name"><span class="lock-icon">🔒</span><span>${t.name}</span></div>
-                        <div style="display:flex; align-items:center;">
-                            <span style="color:var(--text-muted)">${formatMoney(t.current)} / ${formatMoney(t.goal)}</span>
-                            <button class="btn-transfer" onclick="openTransferModal('${t.id}', '${t.name}')">⇄</button>
-                        </div>
+                        <div class="tracker-name"><span class="lock-icon">🔒</span><span>${v.name}</span></div>
+                        <div><span style="color:var(--text-muted)">${formatMoney(v.current)} / ${formatMoney(v.goal)}</span></div>
                     </div>
                     <div class="tracker-bar-bg"><div class="tracker-bar-fill" style="width: ${pct}%"></div></div>
+                    
+                    <div id="vault-details-${v.id}" class="vault-details" onclick="event.stopPropagation()">
+                        <div class="vault-actions">
+                            <button class="btn-vault-action btn-deposit" onclick="openTransferModal('${v.id}', '${v.name}', 'in')">Deposit (+)</button>
+                            <button class="btn-vault-action btn-withdraw" onclick="openTransferModal('${v.id}', '${v.name}', 'out')">Withdraw (-)</button>
+                        </div>
+                        <div style="font-size:0.75rem; text-transform:uppercase; color:#666; margin-bottom:5px;">Recent Activity</div>
+                        <ul class="vault-history-list">
+                            ${historyHTML.length > 0 ? historyHTML : '<li class="vault-history-item">No history yet</li>'}
+                        </ul>
+                    </div>
                 </div>`;
         });
         document.getElementById('displayVaultTotal').innerText = formatMoney(totalVaulted);
 
-        // Render Log
+        // 5. Render Main Log
         const logList = document.getElementById('transactionList');
         logList.innerHTML = '';
         if(filteredTrans.length === 0) logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions</li>';
@@ -270,8 +308,8 @@
             if(t.type === 'income') { colorClass = 'text-green'; sign = '+'; }
             if(t.type === 'expense') { colorClass = 'text-red'; sign = '-'; }
             if(t.type === 'transfer') { colorClass = 'text-orange'; sign = ''; } 
-            
             let catString = t.categories ? t.categories.map(c => c.name).join(', ') : '';
+            
             logList.innerHTML += `
                 <li class="log-item">
                     <div class="log-left">
@@ -283,7 +321,17 @@
         });
     }
 
-    // --- ACTIONS (Now Writing to DB) ---
+    // --- LOGIC FUNCTIONS ---
+    window.toggleVaultDetails = function(id) {
+        const el = document.getElementById(`vault-details-${id}`);
+        // Close all others
+        document.querySelectorAll('.vault-details').forEach(d => {
+            if(d.id !== `vault-details-${id}`) d.style.display = 'none';
+        });
+        // Toggle clicked
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
     window.saveTransaction = async function() {
         const type = document.getElementById('inputType').value;
         const date = document.getElementById('inputDate').value;
@@ -316,9 +364,7 @@
             closeMainModal();
             document.getElementById('inputAmount').value = '';
             document.getElementById('inputPayee').value = '';
-        } catch (e) {
-            alert("Error saving: " + e.message);
-        }
+        } catch (e) { alert("Error saving: " + e.message); }
     }
 
     window.createNewProject = async function() {
@@ -337,7 +383,6 @@
         const dir = document.getElementById('transferDir').value;
         if(!amount) return;
 
-        // 1. Find local project to get current value
         const project = localState.vaults.find(v => v.id === id);
         if(!project) return;
         
@@ -346,16 +391,14 @@
         else newCurrent -= amount;
 
         try {
-            // Update Vault in DB
             await updateDoc(doc(db, "vaults", id), { current: newCurrent });
-            
-            // Log Transaction in DB
             await addDoc(collection(db, "transactions"), {
                 date: new Date().toISOString().split('T')[0],
                 payee: (dir === 'in' ? "To Vault: " : "From Vault: ") + project.name,
                 amount: amount,
                 type: 'transfer',
                 transferDir: dir,
+                vaultId: id, // Link for history
                 categories: [{name: 'Transfer', pct: 100}]
             });
             document.getElementById('transferModal').style.display = 'none';
@@ -363,8 +406,7 @@
         } catch(e) { alert("Transfer failed"); }
     }
 
-    // --- HELPERS (Date, Formatting) ---
-    // (Same as before, attached to window to be accessible)
+    // --- HELPERS ---
     window.handleDateFilterChange = function() {
         const val = document.getElementById('dateFilter').value;
         const customDiv = document.getElementById('customDateRange');
@@ -402,13 +444,15 @@
         document.getElementById('splitRows').innerHTML += `<div class="split-row"><select class="split-cat-select" style="flex:2;"><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Housing">Housing</option><option value="Utilities">Utilities</option><option value="Transport">Transport</option><option value="Entertainment">Entertainment</option><option value="Shopping">Shopping</option></select><input type="number" class="split-cat-pct" placeholder="%" style="flex:1;"><button type="button" class="btn-small" onclick="this.parentElement.remove()">x</button></div>`;
     }
     window.openNewProjectModal = function() { document.getElementById('newProjectModal').style.display = 'flex'; }
-    window.openTransferModal = function(id, name) {
+    window.openTransferModal = function(id, name, dir) {
         document.getElementById('transferProjectId').value = id;
         document.getElementById('transferTargetName').innerText = `Transferring for: ${name}`;
+        // Pre-select the direction based on which button was clicked
+        if(dir) document.getElementById('transferDir').value = dir;
         document.getElementById('transferModal').style.display = 'flex';
     }
     
-    // Init Date Picker and Splits
+    // Init
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('inputDate').valueAsDate = new Date();
         window.addSplitRow();
