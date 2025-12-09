@@ -52,6 +52,14 @@
         /* LOGS */
         .section-header { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
         .log-list { list-style: none; padding: 0; margin: 0; padding-bottom: 50px; }
+        
+        /* New Date Header Style */
+        .log-date-header { 
+            font-size: 0.85rem; color: var(--text-muted); font-weight: 700; 
+            margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;
+            padding-left: 5px;
+        }
+        
         .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
         .log-item:active { background-color: #263345; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
@@ -285,7 +293,7 @@
 
     // --- RENDER MASTER ---
     window.render = function() {
-        // Sort
+        // Sort: Date descending, then created descending
         localState.transactions.sort((a, b) => {
             if (a.date !== b.date) return new Date(b.date) - new Date(a.date);
             return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -309,15 +317,13 @@
             resetEl.innerText = "";
         }
 
-        // GENERATE DAILY PACING ROW
+        // GENERATE DAILY PACING ROW & COLOR LOGIC
         const dailyRow = document.getElementById('dailyRow');
         dailyRow.innerHTML = '';
         
-        let accumulatedTarget = 0;
-        let accumulatedSpend = 0;
-        
+        // Accurate Local Date for Comparison
         const now = new Date();
-        const nowStr = getLocalDate();
+        const nowStr = getLocalDate(); // YYYY-MM-DD
 
         if(fundingTx) {
             const parts = fundingTx.date.split('-');
@@ -339,12 +345,6 @@
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
-                // Cumulative tracking for Main Balance color (still useful)
-                if (isoDate <= nowStr) {
-                    accumulatedTarget += dayTarget;
-                    accumulatedSpend += daySpend;
-                }
-
                 // Color Logic - STRICT DAILY MODE
                 const isFuture = isoDate > nowStr;
                 let actualClass = 'text-green';
@@ -353,7 +353,6 @@
                 if (isFuture) {
                     actualClass = 'text-muted'; 
                 } else {
-                    // Strict Day Check: Did spend exceed day target?
                     if (daySpend > dayTarget) actualClass = 'text-red';
                 }
 
@@ -367,7 +366,7 @@
             }
         }
 
-        // MAIN TOTALS & COLORS
+        // MAIN TOTALS
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
@@ -376,14 +375,7 @@
         const currentBalance = income - expense;
         const balanceEl = document.getElementById('displayBalance');
         balanceEl.textContent = formatMoney(currentBalance);
-        
-        balanceEl.className = 'summary-balance';
-        if (currentBalance < 0) {
-            balanceEl.classList.add('text-red');
-        } else if (accumulatedSpend > accumulatedTarget) {
-            // Keep the yellow warning on main balance if total pace is off
-            balanceEl.classList.add('text-yellow');
-        }
+        balanceEl.className = currentBalance < 0 ? 'summary-balance text-red' : 'summary-balance';
 
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
@@ -397,19 +389,27 @@
         }
 
         const isMaster = localStorage.getItem('authLevel') === 'master';
+        let lastDate = null;
 
         localState.transactions.forEach(t => {
+            // INSERT DATE HEADER
+            if (t.date !== lastDate) {
+                // Formatting Date -> "Tuesday, Dec 10"
+                const parts = t.date.split('-');
+                const d = new Date(parts[0], parts[1]-1, parts[2]);
+                const niceDate = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                
+                logList.innerHTML += `<div class="log-date-header">${niceDate}</div>`;
+                lastDate = t.date;
+            }
+
             let colorClass = 'text-main'; let sign = '';
             if(t.type === 'income') { colorClass = 'text-green'; sign = '+'; }
             if(t.type === 'expense') { colorClass = 'text-red'; sign = '-'; }
             
             let metaString = t.purpose || "";
             
-            // Format date to Day Name
-            const parts = t.date.split('-');
-            const d = new Date(parts[0], parts[1]-1, parts[2]);
-            const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-
+            // Percentage Logic
             let percentHtml = "";
             if (totalFunding > 0 && t.type === 'expense' && t.id !== fundingTx?.id) {
                 const pct = (t.amount / totalFunding) * 100;
@@ -421,7 +421,7 @@
 
             logList.innerHTML += `
                 <li class="log-item ${cursorClass}" ${clickAttr}>
-                    <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta"><span>${dayName}</span> &bull; ${metaString}</div></div>
+                    <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta">${metaString}</div></div>
                     <div class="log-right">
                         <div class="log-amount ${colorClass}">${sign}${formatMoney(t.amount)}</div>
                         ${percentHtml}
@@ -466,7 +466,6 @@
     }
     
     // Get Date String from Day Name relative to current week
-    // We calculate "This week's Tuesday" based on today's date
     window.getDateFromDay = function(dayName) {
         const dayMap = { "Sunday":0, "Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6 };
         const targetDayIndex = dayMap[dayName];
@@ -477,11 +476,6 @@
         
         const targetDate = new Date(now);
         targetDate.setDate(now.getDate() + diff);
-        
-        // Safety: If selecting a future day that is technically "next week", it might be safer to limit to past/today?
-        // But simplified logic: We just pick the day in the current calendar week window (Sun-Sat or Mon-Sun).
-        // Let's assume standard "nearest day".
-        
         return targetDate.toISOString().slice(0,10);
     }
     
@@ -539,7 +533,6 @@
 
         if(!amount || !payee) return alert("Fill amount and payee");
 
-        // Convert Day Name -> Date String
         const date = getDateFromDay(dayName);
 
         const data = { date, payee, purpose, amount, type, updatedAt: new Date().toISOString() };
@@ -561,6 +554,7 @@
     
     // Init
     document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('inputDate').value = getLocalDate();
         checkAuth();
     });
 </script>
