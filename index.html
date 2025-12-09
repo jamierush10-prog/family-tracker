@@ -15,7 +15,17 @@
             --nav-height: 60px;
         }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px 20px 80px 20px; display: flex; justify-content: center; }
-        .dashboard { width: 100%; max-width: 650px; display: none; /* Hidden by default for lock */ }
+        .dashboard { width: 100%; max-width: 650px; display: none; }
+        
+        /* FAMILY MODE HIDDEN ITEMS */
+        body.family-mode .tracker-grid,
+        body.family-mode .log-list,
+        body.family-mode .section-header,
+        body.family-mode .fab,
+        body.family-mode .bottom-nav,
+        body.family-mode .vault-details-hint {
+            display: none !important;
+        }
         
         /* LOCK SCREEN */
         #lockScreen {
@@ -172,7 +182,7 @@
             <div><h3>Vaults & Projects</h3><span class="section-sub">Total Earmarked: <span id="displayVaultTotal" class="text-green">...</span></span></div>
             <button class="btn-mini" onclick="openNewProjectModal()">+ Add</button>
         </div>
-        <div style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a vault to view history or withdraw</div>
+        <div class="vault-details-hint" style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a vault to view history or withdraw</div>
         <div class="tracker-grid" id="trackerList"></div>
 
         <div class="section-header"><h3>Transaction Log</h3></div>
@@ -272,7 +282,8 @@
     const DEFAULT_CATS = ["Groceries", "Dining", "Housing", "Utilities", "Transport", "Entertainment", "Shopping", "Health"];
 
     // --- LOCK SCREEN LOGIC ---
-    const CORRECT_PIN = "1111"; // <--- CHANGE THIS TO YOUR DESIRED CODE
+    const MASTER_PIN = "0703"; 
+    const FAMILY_PIN = "1112";
     let enteredPin = "";
 
     window.pressKey = function(num) {
@@ -297,27 +308,35 @@
     }
 
     function checkPin() {
-        if(enteredPin === CORRECT_PIN) {
-            localStorage.setItem('isAuthenticated', 'true');
-            unlockApp();
+        if(enteredPin === MASTER_PIN) {
+            localStorage.setItem('authLevel', 'master');
+            unlockApp('master');
+        } else if (enteredPin === FAMILY_PIN) {
+            localStorage.setItem('authLevel', 'family');
+            unlockApp('family');
         } else {
-            // Shake effect or simple reset
             setTimeout(() => {
                 enteredPin = "";
                 updateDots();
-                alert("Incorrect Passcode"); // Simple feedback
+                alert("Incorrect Passcode");
             }, 200);
         }
     }
 
-    function unlockApp() {
+    function unlockApp(level) {
         document.getElementById('lockScreen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
+        if (level === 'family') {
+            document.body.classList.add('family-mode');
+        } else {
+            document.body.classList.remove('family-mode');
+        }
     }
 
     function checkAuth() {
-        if(localStorage.getItem('isAuthenticated') === 'true') {
-            unlockApp();
+        const level = localStorage.getItem('authLevel');
+        if(level) {
+            unlockApp(level);
         }
     }
 
