@@ -11,7 +11,9 @@
             --bg-color: #0f172a; --card-bg: #1e293b; --input-bg: #334155;
             --text-main: #f8fafc; --text-muted: #94a3b8;
             --accent-green: #10b981; --accent-red: #ef4444; 
-            --accent-blue: #3b82f6; --accent-orange: #f59e0b; --border-color: #334155;
+            --accent-blue: #3b82f6; --accent-orange: #f59e0b; 
+            --accent-yellow: #facc15; /* NEW YELLOW */
+            --border-color: #334155;
         }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .dashboard { width: 100%; max-width: 650px; display: none; }
@@ -26,14 +28,14 @@
         /* Summary Card */
         .summary-card { background-color: var(--card-bg); padding: 30px 25px; border-radius: 16px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); }
         .summary-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;}
-        .summary-balance { font-size: 4rem; font-weight: 700; margin: 10px 0; letter-spacing: -2px; color: var(--text-main); }
+        .summary-balance { font-size: 4rem; font-weight: 700; margin: 10px 0; letter-spacing: -2px; color: var(--text-main); transition: color 0.3s ease; }
         .flow-container { display: flex; justify-content: center; gap: 40px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         .flow-item div:first-child { font-size: 0.75rem; color: var(--text-muted); margin-bottom:5px; text-transform: uppercase;}
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
-        .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); }
+        .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); } .text-yellow { color: var(--accent-yellow); }
         .reset-date { font-size: 0.7rem; color: #64748b; margin-top: 6px; font-weight: 500; letter-spacing: 0.5px; }
 
-        /* DAILY TRACKER (NEW) */
+        /* DAILY TRACKER */
         .daily-wrapper { overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .daily-row { display: flex; gap: 10px; min-width: max-content; }
         .daily-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 15px; text-align: center; min-width: 70px; display: flex; flex-direction: column; gap: 4px; }
@@ -41,7 +43,7 @@
         .day-target { font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; }
         .day-actual { font-weight: 600; font-size: 0.9rem; }
         
-        /* ACTION BUTTONS (ADMIN ONLY) */
+        /* ACTION BUTTONS */
         .admin-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .btn-big { padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: center; font-size: 0.95rem; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-add { background: var(--accent-blue); color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
@@ -59,7 +61,7 @@
         .log-amount { font-weight: 600; font-size: 1rem; }
         .log-pct { font-size: 0.75rem; color: #64748b; margin-top: 2px; font-weight: 500; }
 
-        /* FAMILY MODE HIDING RULES */
+        /* FAMILY MODE HIDING */
         body.family-mode .admin-controls { display: none !important; }
         body.family-mode .log-list { display: block !important; } 
         body.family-mode .log-item { pointer-events: none; } 
@@ -281,7 +283,7 @@
         let income = 0; 
         let expense = 0;
         
-        // Find Funding Row
+        // Find Funding Row for % Calc and Date Logic
         const fundingTx = localState.transactions.find(t => t.purpose === "Reset");
         const totalFunding = fundingTx ? fundingTx.amount : 0;
 
@@ -296,15 +298,19 @@
             resetEl.innerText = "";
         }
 
-        // GENERATE DAILY PACING ROW
+        // GENERATE DAILY PACING ROW & COLOR LOGIC
         const dailyRow = document.getElementById('dailyRow');
         dailyRow.innerHTML = '';
+        
+        let accumulatedTarget = 0;
+        let accumulatedSpend = 0;
+        const now = new Date();
+        now.setHours(0,0,0,0); // Clear time for comparison
+
         if(fundingTx) {
             const parts = fundingTx.date.split('-');
             const startDate = new Date(parts[0], parts[1]-1, parts[2]);
             const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            
-            // Hardcoded Percentages
             const pctMap = { 'Mon': 0.1, 'Tue': 0.1, 'Wed': 0.1, 'Thu': 0.1, 'Fri': 0.1, 'Sat': 0.3, 'Sun': 0.2 };
 
             for(let i=0; i<7; i++) {
@@ -315,13 +321,19 @@
                 const dayName = dayNames[d.getDay()];
                 const targetAmt = totalFunding * pctMap[dayName];
                 
-                // Calc Actual Spend for this specific day
+                // Calc Actual Spend for this day
                 let daySpend = 0;
                 localState.transactions.forEach(t => {
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
-                // Color Logic
+                // Accumulate totals ONLY if day is <= today
+                if (d <= now) {
+                    accumulatedTarget += targetAmt;
+                    accumulatedSpend += daySpend;
+                }
+
+                // Color Logic for Day Card
                 const actualClass = daySpend > targetAmt ? 'text-red' : 'text-green';
 
                 dailyRow.innerHTML += `
@@ -334,15 +346,28 @@
             }
         }
 
-        // MAIN TOTALS
+        // MAIN TOTALS & COLORS
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
         });
 
         const currentBalance = income - expense;
+        const balanceEl = document.getElementById('displayBalance');
+        balanceEl.textContent = formatMoney(currentBalance);
+        
+        // Reset classes
+        balanceEl.className = 'summary-balance';
+        
+        // Priority 1: Broke (Red)
+        if (currentBalance < 0) {
+            balanceEl.classList.add('text-red');
+        } 
+        // Priority 2: Off Pace (Yellow)
+        else if (accumulatedSpend > accumulatedTarget) {
+            balanceEl.classList.add('text-yellow');
+        }
 
-        document.getElementById('displayBalance').textContent = formatMoney(currentBalance);
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
 
@@ -363,7 +388,6 @@
             
             let metaString = t.purpose || "";
             
-            // Percentage Logic
             let percentHtml = "";
             if (totalFunding > 0 && t.type === 'expense' && t.id !== fundingTx?.id) {
                 const pct = (t.amount / totalFunding) * 100;
