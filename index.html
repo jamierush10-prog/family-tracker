@@ -12,7 +12,7 @@
             --text-main: #f8fafc; --text-muted: #94a3b8;
             --accent-green: #10b981; --accent-red: #ef4444; 
             --accent-blue: #3b82f6; --accent-orange: #f59e0b; 
-            --accent-yellow: #facc15; /* NEW YELLOW */
+            --accent-yellow: #facc15; 
             --border-color: #334155;
         }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -38,7 +38,7 @@
         /* DAILY TRACKER */
         .daily-wrapper { overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .daily-row { display: flex; gap: 10px; min-width: max-content; }
-        .daily-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 15px; text-align: center; min-width: 70px; display: flex; flex-direction: column; gap: 4px; }
+        .daily-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 15px; text-align: center; min-width: 75px; display: flex; flex-direction: column; gap: 4px; }
         .day-name { font-weight: 700; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; }
         .day-target { font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; }
         .day-actual { font-weight: 600; font-size: 0.9rem; }
@@ -274,7 +274,7 @@
 
     // --- RENDER MASTER ---
     window.render = function() {
-        // Sort: Date descending, then created descending
+        // Sort
         localState.transactions.sort((a, b) => {
             if (a.date !== b.date) return new Date(b.date) - new Date(a.date);
             return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -283,7 +283,7 @@
         let income = 0; 
         let expense = 0;
         
-        // Find Funding Row for % Calc and Date Logic
+        // Find Funding Row
         const fundingTx = localState.transactions.find(t => t.purpose === "Reset");
         const totalFunding = fundingTx ? fundingTx.amount : 0;
 
@@ -304,8 +304,10 @@
         
         let accumulatedTarget = 0;
         let accumulatedSpend = 0;
+        
+        // Accurate Local Date for Comparison
         const now = new Date();
-        now.setHours(0,0,0,0); // Clear time for comparison
+        const nowStr = getLocalDate(); // YYYY-MM-DD
 
         if(fundingTx) {
             const parts = fundingTx.date.split('-');
@@ -321,26 +323,35 @@
                 const dayName = dayNames[d.getDay()];
                 const targetAmt = totalFunding * pctMap[dayName];
                 
-                // Calc Actual Spend for this day
                 let daySpend = 0;
                 localState.transactions.forEach(t => {
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
-                // Accumulate totals ONLY if day is <= today
-                if (d <= now) {
+                // Check time
+                const isFuture = isoDate > nowStr;
+                
+                if (!isFuture) {
                     accumulatedTarget += targetAmt;
                     accumulatedSpend += daySpend;
                 }
 
-                // Color Logic for Day Card
-                const actualClass = daySpend > targetAmt ? 'text-red' : 'text-green';
+                // Visual Logic
+                let actualClass = 'text-green';
+                let valueText = formatMoneyNoDec(daySpend);
+                
+                if (isFuture) {
+                    actualClass = 'text-muted'; // Gray out future
+                    // Keep value text as $0
+                } else {
+                    if (daySpend > targetAmt) actualClass = 'text-red';
+                }
 
                 dailyRow.innerHTML += `
                     <div class="daily-card">
                         <div class="day-name">${dayName}</div>
                         <div class="day-target">Goal: ${formatMoneyNoDec(targetAmt)}</div>
-                        <div class="day-actual ${actualClass}">${formatMoneyNoDec(daySpend)}</div>
+                        <div class="day-actual ${actualClass}">${valueText}</div>
                     </div>
                 `;
             }
@@ -356,15 +367,10 @@
         const balanceEl = document.getElementById('displayBalance');
         balanceEl.textContent = formatMoney(currentBalance);
         
-        // Reset classes
         balanceEl.className = 'summary-balance';
-        
-        // Priority 1: Broke (Red)
         if (currentBalance < 0) {
             balanceEl.classList.add('text-red');
-        } 
-        // Priority 2: Off Pace (Yellow)
-        else if (accumulatedSpend > accumulatedTarget) {
+        } else if (accumulatedSpend > accumulatedTarget) {
             balanceEl.classList.add('text-yellow');
         }
 
