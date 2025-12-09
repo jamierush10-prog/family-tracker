@@ -38,7 +38,7 @@
         /* DAILY TRACKER */
         .daily-wrapper { overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .daily-row { display: flex; gap: 10px; min-width: max-content; }
-        .daily-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 15px; text-align: center; min-width: 75px; display: flex; flex-direction: column; gap: 4px; }
+        .daily-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 15px; text-align: center; min-width: 80px; display: flex; flex-direction: column; gap: 4px; }
         .day-name { font-weight: 700; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; }
         .day-target { font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; }
         .day-actual { font-weight: 600; font-size: 0.9rem; }
@@ -302,12 +302,11 @@
         const dailyRow = document.getElementById('dailyRow');
         dailyRow.innerHTML = '';
         
-        let accumulatedTarget = 0;
-        let accumulatedSpend = 0;
+        let runningTarget = 0; // Cumulative Target
+        let runningSpend = 0;  // Cumulative Spend
         
-        // Accurate Local Date for Comparison
         const now = new Date();
-        const nowStr = getLocalDate(); // YYYY-MM-DD
+        const nowStr = getLocalDate();
 
         if(fundingTx) {
             const parts = fundingTx.date.split('-');
@@ -321,36 +320,34 @@
                 
                 const isoDate = d.toISOString().slice(0,10);
                 const dayName = dayNames[d.getDay()];
-                const targetAmt = totalFunding * pctMap[dayName];
+                const dayTarget = totalFunding * pctMap[dayName];
                 
+                // Calc Actual Spend for this day
                 let daySpend = 0;
                 localState.transactions.forEach(t => {
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
-                // Check time
-                const isFuture = isoDate > nowStr;
-                
-                if (!isFuture) {
-                    accumulatedTarget += targetAmt;
-                    accumulatedSpend += daySpend;
-                }
+                // Update Running Totals
+                runningTarget += dayTarget;
+                runningSpend += daySpend;
 
-                // Visual Logic
+                // Color Logic
+                const isFuture = isoDate > nowStr;
                 let actualClass = 'text-green';
                 let valueText = formatMoneyNoDec(daySpend);
                 
                 if (isFuture) {
-                    actualClass = 'text-muted'; // Gray out future
-                    // Keep value text as $0
+                    actualClass = 'text-muted'; 
                 } else {
-                    if (daySpend > targetAmt) actualClass = 'text-red';
+                    // KEY CHANGE: Compare Running vs Running
+                    if (runningSpend > runningTarget) actualClass = 'text-red';
                 }
 
                 dailyRow.innerHTML += `
                     <div class="daily-card">
                         <div class="day-name">${dayName}</div>
-                        <div class="day-target">Goal: ${formatMoneyNoDec(targetAmt)}</div>
+                        <div class="day-target">Goal: ${formatMoneyNoDec(dayTarget)}</div>
                         <div class="day-actual ${actualClass}">${valueText}</div>
                     </div>
                 `;
@@ -370,7 +367,7 @@
         balanceEl.className = 'summary-balance';
         if (currentBalance < 0) {
             balanceEl.classList.add('text-red');
-        } else if (accumulatedSpend > accumulatedTarget) {
+        } else if (runningSpend > runningTarget) {
             balanceEl.classList.add('text-yellow');
         }
 
