@@ -31,10 +31,16 @@
         .flow-item div:first-child { font-size: 0.75rem; color: var(--text-muted); margin-bottom:5px; text-transform: uppercase;}
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
         .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); }
-        
-        /* New Reset Date Style */
         .reset-date { font-size: 0.7rem; color: #64748b; margin-top: 6px; font-weight: 500; letter-spacing: 0.5px; }
 
+        /* DAILY TRACKER (NEW) */
+        .daily-wrapper { overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        .daily-row { display: flex; gap: 10px; min-width: max-content; }
+        .daily-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 15px; text-align: center; min-width: 70px; display: flex; flex-direction: column; gap: 4px; }
+        .day-name { font-weight: 700; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; }
+        .day-target { font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; }
+        .day-actual { font-weight: 600; font-size: 0.9rem; }
+        
         /* ACTION BUTTONS (ADMIN ONLY) */
         .admin-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .btn-big { padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: center; font-size: 0.95rem; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -124,13 +130,21 @@
         <div class="summary-balance" id="displayBalance">...</div>
         <div class="flow-container">
             <div class="flow-item">
-                <div>Weekly Funding</div> <div class="text-green" id="displayIncome">...</div>
-                <div id="displayNextReset" class="reset-date"></div> </div>
+                <div>Weekly Funding</div>
+                <div class="text-green" id="displayIncome">...</div>
+                <div id="displayNextReset" class="reset-date"></div>
+            </div>
             <div class="flow-item">
                 <div>Expenses (Out)</div>
                 <div class="text-red" id="displayExpense">...</div>
             </div>
         </div>
+    </div>
+
+    <div style="font-weight:600; font-size:0.9rem; margin-bottom:10px;">Daily Pacing</div>
+    <div class="daily-wrapper">
+        <div class="daily-row" id="dailyRow">
+            </div>
     </div>
 
     <div class="admin-controls">
@@ -267,24 +281,60 @@
         let income = 0; 
         let expense = 0;
         
-        // Find Funding Row for % Calc and Date Logic
+        // Find Funding Row
         const fundingTx = localState.transactions.find(t => t.purpose === "Reset");
         const totalFunding = fundingTx ? fundingTx.amount : 0;
 
         // CALCULATE NEXT RESET DATE
         const resetEl = document.getElementById('displayNextReset');
         if (fundingTx) {
-            // Parse local date safely
-            const parts = fundingTx.date.split('-'); // YYYY-MM-DD
-            const localDate = new Date(parts[0], parts[1]-1, parts[2]); // Local Constructor
-            localDate.setDate(localDate.getDate() + 7); // Add 7 days
-            
-            const dateStr = localDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-            resetEl.innerText = `Next: ${dateStr}`;
+            const parts = fundingTx.date.split('-'); 
+            const localDate = new Date(parts[0], parts[1]-1, parts[2]); 
+            localDate.setDate(localDate.getDate() + 7); 
+            resetEl.innerText = `Next: ${localDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
         } else {
             resetEl.innerText = "";
         }
 
+        // GENERATE DAILY PACING ROW
+        const dailyRow = document.getElementById('dailyRow');
+        dailyRow.innerHTML = '';
+        if(fundingTx) {
+            const parts = fundingTx.date.split('-');
+            const startDate = new Date(parts[0], parts[1]-1, parts[2]);
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Hardcoded Percentages
+            const pctMap = { 'Mon': 0.1, 'Tue': 0.1, 'Wed': 0.1, 'Thu': 0.1, 'Fri': 0.1, 'Sat': 0.3, 'Sun': 0.2 };
+
+            for(let i=0; i<7; i++) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                
+                const isoDate = d.toISOString().slice(0,10);
+                const dayName = dayNames[d.getDay()];
+                const targetAmt = totalFunding * pctMap[dayName];
+                
+                // Calc Actual Spend for this specific day
+                let daySpend = 0;
+                localState.transactions.forEach(t => {
+                    if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
+                });
+
+                // Color Logic
+                const actualClass = daySpend > targetAmt ? 'text-red' : 'text-green';
+
+                dailyRow.innerHTML += `
+                    <div class="daily-card">
+                        <div class="day-name">${dayName}</div>
+                        <div class="day-target">Goal: ${formatMoneyNoDec(targetAmt)}</div>
+                        <div class="day-actual ${actualClass}">${formatMoneyNoDec(daySpend)}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // MAIN TOTALS
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
@@ -296,6 +346,7 @@
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
 
+        // LOGS
         const logList = document.getElementById('transactionList');
         logList.innerHTML = '';
         
@@ -368,6 +419,7 @@
     }
 
     window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+    window.formatMoneyNoDec = function(num) { return '$' + Math.round(num).toLocaleString('en-US'); }
     window.closeMainModal = function() { document.getElementById('mainModal').style.display = 'none'; }
 
     window.openMainModal = function() {
