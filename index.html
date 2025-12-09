@@ -43,19 +43,20 @@
         /* LOGS */
         .section-header { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
         .log-list { list-style: none; padding: 0; margin: 0; padding-bottom: 50px; }
-        .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
-        .log-item:active { background-color: #263345; }
+        .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; transition: background 0.2s; }
+        .log-item.clickable { cursor: pointer; }
+        .log-item.clickable:active { background-color: #263345; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
         .log-amount { font-weight: 600; font-size: 1rem; }
 
         /* FAMILY MODE HIDING RULES */
+        /* Hidden: Add/Reset buttons, Floating Add Button, "Tap to edit" hint */
         body.family-mode .admin-controls { display: none !important; }
-        body.family-mode .log-list { display: none !important; }
-        body.family-mode .section-header { display: none !important; }
-        body.family-mode .log-hint { display: none !important; }
-
+        body.family-mode .fab { display: none !important; } 
+        body.family-mode .log-hint { display: none !important; } 
+        
         /* LOCK SCREEN */
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
@@ -76,6 +77,8 @@
         .btn-primary { background: var(--text-main); color: var(--bg-color); width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .btn-delete { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none; }
         .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; width: 100%; margin-top: 15px; }
+        
+        .fab { position: fixed; bottom: 40px; right: 20px; background-color: var(--accent-blue); color: white; width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 32px; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; z-index: 90; }
     </style>
 </head>
 <body>
@@ -131,6 +134,8 @@
     <div class="log-hint" style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap to edit</div>
     <ul class="log-list" id="transactionList"></ul>
 </div>
+
+<button class="fab" id="fabAdd" onclick="openMainModal()">+</button>
 
 <div class="modal-overlay" id="mainModal">
     <div class="modal-card">
@@ -266,6 +271,9 @@
             logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions this period. Start by resetting the week!</li>';
         }
 
+        // Auth check for Clickability
+        const isMaster = localStorage.getItem('authLevel') === 'master';
+
         localState.transactions.forEach(t => {
             let colorClass = 'text-main'; let sign = '';
             if(t.type === 'income') { colorClass = 'text-green'; sign = '+'; }
@@ -273,8 +281,12 @@
             
             let metaString = t.purpose || "";
             
+            // If Master: Click to edit. If Family: No click.
+            const clickAttr = isMaster ? `onclick="editTransaction('${t.id}')"` : "";
+            const cursorClass = isMaster ? "clickable" : "";
+
             logList.innerHTML += `
-                <li class="log-item" onclick="editTransaction('${t.id}')">
+                <li class="log-item ${cursorClass}" ${clickAttr}>
                     <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta"><span>${t.date}</span> &bull; ${metaString}</div></div>
                     <div class="log-amount ${colorClass}">${sign}${formatMoney(t.amount)}</div>
                 </li>`;
@@ -283,11 +295,7 @@
 
     // --- LOGIC ---
     window.resetWeek = async function() {
-        // Double check auth again before destructive action
-        if (localStorage.getItem('authLevel') !== 'master') {
-            alert("Admin access required.");
-            return;
-        }
+        if (localStorage.getItem('authLevel') !== 'master') return;
 
         const amountStr = prompt("Start New Week: How much funding?");
         const amount = parseFloat(amountStr);
