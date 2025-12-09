@@ -20,8 +20,6 @@
         .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:15px; border-bottom:1px solid var(--border-color); }
         .app-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
         .status-badge { font-size: 0.7rem; background: #334155; padding: 4px 8px; border-radius: 4px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: inline-block; }
-        
-        /* SIGN OUT BUTTON */
         .btn-signout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; transition: all 0.2s; }
         .btn-signout:active { background: var(--input-bg); color: white; }
 
@@ -33,6 +31,9 @@
         .flow-item div:first-child { font-size: 0.75rem; color: var(--text-muted); margin-bottom:5px; text-transform: uppercase;}
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
         .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); }
+        
+        /* New Reset Date Style */
+        .reset-date { font-size: 0.7rem; color: #64748b; margin-top: 6px; font-weight: 500; letter-spacing: 0.5px; }
 
         /* ACTION BUTTONS (ADMIN ONLY) */
         .admin-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
@@ -48,16 +49,14 @@
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
-        
-        /* Updated Amount Column for Percentages */
         .log-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
         .log-amount { font-weight: 600; font-size: 1rem; }
         .log-pct { font-size: 0.75rem; color: #64748b; margin-top: 2px; font-weight: 500; }
 
         /* FAMILY MODE HIDING RULES */
         body.family-mode .admin-controls { display: none !important; }
-        body.family-mode .log-list { display: block !important; } /* Family can see logs now */
-        body.family-mode .log-item { pointer-events: none; } /* But cannot click/edit */
+        body.family-mode .log-list { display: block !important; } 
+        body.family-mode .log-item { pointer-events: none; } 
         body.family-mode .fab { display: none !important; } 
         body.family-mode .log-hint { display: none !important; }
 
@@ -124,8 +123,13 @@
         <div class="summary-label">Available Funds</div>
         <div class="summary-balance" id="displayBalance">...</div>
         <div class="flow-container">
-            <div class="flow-item"><div>Income (In)</div><div class="text-green" id="displayIncome">...</div></div>
-            <div class="flow-item"><div>Expenses (Out)</div><div class="text-red" id="displayExpense">...</div></div>
+            <div class="flow-item">
+                <div>Weekly Funding</div> <div class="text-green" id="displayIncome">...</div>
+                <div id="displayNextReset" class="reset-date"></div> </div>
+            <div class="flow-item">
+                <div>Expenses (Out)</div>
+                <div class="text-red" id="displayExpense">...</div>
+            </div>
         </div>
     </div>
 
@@ -254,7 +258,7 @@
 
     // --- RENDER MASTER ---
     window.render = function() {
-        // SORTING: 1. Date Descending, 2. CreatedAt Descending (so newest on top same day)
+        // Sort: Date descending, then created descending
         localState.transactions.sort((a, b) => {
             if (a.date !== b.date) return new Date(b.date) - new Date(a.date);
             return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -263,9 +267,23 @@
         let income = 0; 
         let expense = 0;
         
-        // Find Funding Row for % Calc
+        // Find Funding Row for % Calc and Date Logic
         const fundingTx = localState.transactions.find(t => t.purpose === "Reset");
         const totalFunding = fundingTx ? fundingTx.amount : 0;
+
+        // CALCULATE NEXT RESET DATE
+        const resetEl = document.getElementById('displayNextReset');
+        if (fundingTx) {
+            // Parse local date safely
+            const parts = fundingTx.date.split('-'); // YYYY-MM-DD
+            const localDate = new Date(parts[0], parts[1]-1, parts[2]); // Local Constructor
+            localDate.setDate(localDate.getDate() + 7); // Add 7 days
+            
+            const dateStr = localDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            resetEl.innerText = `Next: ${dateStr}`;
+        } else {
+            resetEl.innerText = "";
+        }
 
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
