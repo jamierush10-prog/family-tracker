@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Family Spending Control</title>
+    <title>Paycheck 2 Paycheck</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         /* --- CSS STYLES --- */
@@ -12,20 +12,9 @@
             --text-main: #f8fafc; --text-muted: #94a3b8;
             --accent-green: #10b981; --accent-red: #ef4444; 
             --accent-blue: #3b82f6; --accent-orange: #f59e0b; --border-color: #334155;
-            --nav-height: 60px;
         }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px 20px 80px 20px; display: flex; justify-content: center; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .dashboard { width: 100%; max-width: 650px; display: none; }
-        
-        /* FAMILY MODE HIDDEN ITEMS */
-        body.family-mode .tracker-grid,
-        body.family-mode .log-list,
-        body.family-mode .section-header,
-        body.family-mode .fab,
-        body.family-mode .bottom-nav,
-        body.family-mode .vault-details-hint {
-            display: none !important;
-        }
         
         /* LOCK SCREEN */
         #lockScreen {
@@ -46,65 +35,35 @@
         .key:active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
         .key-del { background: transparent; border: none; font-size: 1rem; color: var(--text-muted); }
 
-        /* Global Filter */
-        .global-filter { margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-        .date-select { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; width: 100%; max-width: 200px; }
-        .custom-date-row { display: none; gap: 5px; justify-content: flex-end; width: 100%; }
-        
-        /* Views */
-        .view-section { display: none; animation: fadeIn 0.3s; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* HEADER & RESET */
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .app-title { font-size: 1.2rem; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+        .btn-reset { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-orange); color: var(--accent-orange); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
 
         /* Summary Card */
         .summary-card { background-color: var(--card-bg); padding: 30px 25px; border-radius: 16px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); }
         .summary-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;}
-        .summary-balance { font-size: 3.5rem; font-weight: 700; margin: 10px 0; letter-spacing: -1px; color: var(--text-main); }
-        .flow-container { display: flex; justify-content: center; gap: 20px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; }
-        .flow-item { flex: 1; }
+        .summary-balance { font-size: 4rem; font-weight: 700; margin: 10px 0; letter-spacing: -2px; color: var(--text-main); }
+        .flow-container { display: flex; justify-content: center; gap: 40px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         .flow-item div:first-child { font-size: 0.75rem; color: var(--text-muted); margin-bottom:5px; text-transform: uppercase;}
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
-        .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); } .text-orange { color: var(--accent-orange); }
+        .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); }
 
-        /* Reports Styles */
-        .report-card { background-color: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .report-header { display: flex; justify-content: space-between; font-weight: 500; font-size: 1rem; }
-        .report-bar-bg { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; width: 100%; }
-        .report-bar-fill { height: 100%; background: var(--accent-red); width: 0%; border-radius: 4px; }
-        .report-sub { font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; }
-
-        /* Vaults */
-        .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 35px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .section-header h3 { margin: 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main); }
-        .section-sub { font-size: 0.85rem; color: var(--text-muted); }
-        .btn-mini { background: var(--input-bg); border: none; color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: 10px; }
-        .tracker-grid { display: grid; gap: 12px; }
-        .tracker-card { background-color: var(--card-bg); padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: background 0.2s; }
-        .tracker-card:active { background-color: #263345; }
-        .tracker-top { display: flex; justify-content: space-between; font-size: 0.95rem; align-items: center; }
-        .tracker-name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-        .lock-icon { font-size: 0.8rem; opacity: 0.5; }
-        .tracker-bar-bg { height: 8px; background-color: var(--input-bg); border-radius: 4px; overflow: hidden; margin-top: 5px;}
-        .tracker-bar-fill { height: 100%; background-color: var(--accent-blue); width: 0%; transition: width 0.6s ease; }
-        .vault-details { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
-        .vault-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-vault-action { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-        .btn-deposit { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .btn-withdraw { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        .vault-history-list { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
-        .vault-history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; color: var(--text-muted); }
+        /* Section Header */
+        .section-header { margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 600; font-size: 1.1rem; }
 
         /* Logs */
-        .log-list { list-style: none; padding: 0; margin: 0; }
+        .log-list { list-style: none; padding: 0; margin: 0; padding-bottom: 100px; }
         .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+        .log-item:active { background-color: #263345; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
         .log-amount { font-weight: 600; font-size: 1rem; }
         
-        /* Modals & Nav */
-        .fab { position: fixed; bottom: 80px; right: 20px; background-color: var(--accent-blue); color: white; width: 56px; height: 56px; border-radius: 50%; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; z-index: 90; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 100; }
+        /* Modals & FAB */
+        .fab { position: fixed; bottom: 40px; right: 20px; background-color: var(--accent-blue); color: white; width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 32px; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; z-index: 90; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 100; }
         .modal-card { background: var(--card-bg); width: 90%; max-width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .form-group { margin-bottom: 15px; }
@@ -113,22 +72,18 @@
         .btn-primary { background: var(--text-main); color: var(--bg-color); width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .btn-delete { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none; }
         .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; width: 100%; margin-top: 15px; }
-        .split-container { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 10px; }
-        .split-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
-        .btn-small { background: #334155; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .split-amt { flex: 1; text-align: right; font-size: 0.85rem; color: #888; white-space: nowrap; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; }
-
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 50; }
-        .nav-item { color: var(--text-muted); text-align: center; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .nav-item.active { color: var(--accent-blue); background: rgba(255,255,255,0.02); }
-        .nav-icon { font-size: 1.2rem; margin-bottom: 4px; }
+        
+        /* Family Mode Hiding */
+        body.family-mode .log-list, 
+        body.family-mode .btn-reset,
+        body.family-mode .fab,
+        body.family-mode .log-hint { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="lockScreen">
-    <div style="margin-bottom:30px; font-weight:600; letter-spacing:2px; font-size:0.9rem; color:#888;">ENTER PASSCODE</div>
+    <div style="margin-bottom:30px; font-weight:600; letter-spacing:2px; font-size:0.9rem; color:#888;">PAYCHECK 2 PAYCHECK</div>
     <div class="pin-dots">
         <div class="dot" id="dot1"></div>
         <div class="dot" id="dot2"></div>
@@ -152,61 +107,25 @@
 </div>
 
 <div class="dashboard" id="mainDashboard">
-    <div class="global-filter">
-        <select id="dateFilter" class="date-select" onchange="handleDateFilterChange()">
-            <option value="all" selected>All Time</option>
-            <option value="last7">Last 7 Days</option>
-            <option value="mtd">Month to Date</option>
-            <option value="ytd">Year to Date</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="custom">Custom Range...</option>
-        </select>
-        <div id="customDateRange" class="custom-date-row">
-            <input type="date" id="customStart" class="date-select" style="width:auto" onchange="render()">
-            <input type="date" id="customEnd" class="date-select" style="width:auto" onchange="render()">
+    
+    <div class="app-header">
+        <div class="app-title">Paycheck 2 Paycheck</div>
+        <button class="btn-reset" onclick="resetWeek()">Weekly Reset ↺</button>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Available Funds</div>
+        <div class="summary-balance" id="displayBalance">...</div>
+        <div class="flow-container">
+            <div class="flow-item"><div>Income (In)</div><div class="text-green" id="displayIncome">...</div></div>
+            <div class="flow-item"><div>Expenses (Out)</div><div class="text-red" id="displayExpense">...</div></div>
         </div>
     </div>
 
-    <div id="viewDashboard" class="view-section active">
-        <div class="summary-card">
-            <div class="summary-label">Available Operating Cash</div>
-            <div class="summary-balance" id="displayBalance">...</div>
-            <div class="flow-container">
-                <div class="flow-item"><div>Income (In)</div><div class="text-green" id="displayIncome">...</div></div>
-                <div class="flow-item"><div>Expenses (Out)</div><div class="text-red" id="displayExpense">...</div></div>
-                <div class="flow-item"><div>Vaults (Net)</div><div id="displayVaultFlow">...</div></div>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <div><h3>Vaults & Projects</h3><span class="section-sub">Total Earmarked: <span id="displayVaultTotal" class="text-green">...</span></span></div>
-            <button class="btn-mini" onclick="openNewProjectModal()">+ Add</button>
-        </div>
-        <div class="vault-details-hint" style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a vault to view history or withdraw</div>
-        <div class="tracker-grid" id="trackerList"></div>
-
-        <div class="section-header"><h3>Transaction Log</h3></div>
-        <div style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a transaction to edit or delete</div>
-        <ul class="log-list" id="transactionList"></ul>
-    </div>
-
-    <div id="viewReports" class="view-section">
-        <div class="section-header"><h3>Spending by Category</h3></div>
-        <div id="reportList">
-            </div>
-    </div>
+    <div class="section-header">Transaction Log</div>
+    <div class="log-hint" style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a transaction to edit or delete</div>
+    <ul class="log-list" id="transactionList"></ul>
 </div>
-
-<nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchView('dashboard')">
-        <div class="nav-icon">📊</div>
-        Dashboard
-    </div>
-    <div class="nav-item" onclick="switchView('reports')">
-        <div class="nav-icon">🥧</div>
-        Reports
-    </div>
-</nav>
 
 <button class="fab" id="fabAdd" onclick="openMainModal()">+</button>
 
@@ -217,18 +136,9 @@
             <div><label class="form-label">Type</label><select id="inputType"><option value="expense">Expense (Out)</option><option value="income">Income (In)</option></select></div>
             <div><label class="form-label">Date</label><input type="date" id="inputDate"></div>
         </div>
-        <div class="form-group"><label class="form-label">Amount</label><input type="number" id="inputAmount" placeholder="0.00" step="0.01" oninput="updateSplitMath()"></div>
+        <div class="form-group"><label class="form-label">Amount</label><input type="number" id="inputAmount" placeholder="0.00" step="0.01"></div>
         <div class="form-group"><label class="form-label">Payee</label><input type="text" id="inputPayee" placeholder="e.g. Costco"></div>
         <div class="form-group"><label class="form-label">For (Memo)</label><input type="text" id="inputPurpose" placeholder="e.g. Weekly Groceries"></div>
-
-        <div class="form-group">
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><label class="form-label">Category</label><label class="form-label" style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="toggleSplit" style="width:auto;" onchange="toggleSplitMode()"> Split?</label></div>
-            <div id="singleCategoryMode" style="display:flex; gap:10px;">
-                <select id="inputCategory" style="flex:1;"><option value="Uncategorized">Select...</option></select>
-                <button class="btn-small" onclick="addNewCategory()">+ New</button>
-            </div>
-            <div id="splitCategoryMode" class="split-container" style="display:none;"><div id="splitRows"></div><button type="button" class="btn-small" onclick="addSplitRow()">+ Split</button></div>
-        </div>
         
         <button id="btnSave" class="btn-primary" onclick="saveTransaction()">Save Record</button>
         <button id="btnDelete" class="btn-delete" onclick="deleteTransaction()">Delete Record</button>
@@ -236,33 +146,9 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="transferModal">
-    <div class="modal-card">
-        <h2 style="margin-top:0; font-size:1.2rem;" id="transferTitle">Vault Transfer</h2>
-        <div style="color: var(--text-muted); font-size:0.9rem; margin-bottom:15px;" id="transferTargetName"></div>
-        <input type="hidden" id="transferProjectId">
-        <div class="form-group"><label class="form-label">Date</label><input type="date" id="transferDate"></div>
-        <div class="form-group"><label class="form-label">Action</label><select id="transferDir"><option value="in">🔒 Deposit to Vault (Reduces Operating Cash)</option><option value="out">🔓 Withdraw to Cash (Increases Operating Cash)</option></select></div>
-        <div class="form-group"><label class="form-label">Amount</label><input type="number" id="transferAmount" placeholder="0.00"></div>
-        <button id="btnTransferSave" class="btn-primary" onclick="executeTransfer()">Confirm Transfer</button>
-        <button id="btnTransferDelete" class="btn-delete" onclick="deleteTransfer()">Delete Transfer</button>
-        <button class="btn-text" onclick="document.getElementById('transferModal').style.display='none'">Cancel</button>
-    </div>
-</div>
-
-<div class="modal-overlay" id="newProjectModal">
-    <div class="modal-card">
-        <h2 style="margin-top:0; font-size:1.2rem;">New Vault</h2>
-        <div class="form-group"><label class="form-label">Vault Name</label><input type="text" id="newProjName" placeholder="e.g. New Car"></div>
-        <div class="form-group"><label class="form-label">Goal Amount</label><input type="number" id="newProjGoal" placeholder="5000"></div>
-        <button class="btn-primary" onclick="createNewProject()">Create Vault</button>
-        <button class="btn-text" onclick="document.getElementById('newProjectModal').style.display='none'">Cancel</button>
-    </div>
-</div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
@@ -276,10 +162,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let localState = { transactions: [], vaults: [], categories: [] };
+    let localState = { transactions: [] };
     let editingId = null; 
-    let currentView = 'dashboard';
-    const DEFAULT_CATS = ["Groceries", "Dining", "Housing", "Utilities", "Transport", "Entertainment", "Shopping", "Health"];
 
     // --- LOCK SCREEN LOGIC ---
     const MASTER_PIN = "0703"; 
@@ -345,239 +229,98 @@
         localState.transactions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     });
-    onSnapshot(query(collection(db, "vaults")), (snap) => {
-        localState.vaults = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        render();
-    });
-    onSnapshot(query(collection(db, "categories"), orderBy("name")), async (snap) => {
-        if (snap.empty) { DEFAULT_CATS.forEach(async c => await addDoc(collection(db, "categories"), { name: c })); }
-        else { localState.categories = snap.docs.map(doc => doc.data().name); updateCategoryDropdowns(); }
-    });
-
-    // --- VIEW SWITCHING ---
-    window.switchView = function(viewName) {
-        currentView = viewName;
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        
-        if (viewName === 'dashboard') {
-            document.getElementById('viewDashboard').classList.add('active');
-            document.querySelectorAll('.nav-item')[0].classList.add('active');
-            document.getElementById('fabAdd').style.display = 'flex';
-        } else {
-            document.getElementById('viewReports').classList.add('active');
-            document.querySelectorAll('.nav-item')[1].classList.add('active');
-            document.getElementById('fabAdd').style.display = 'none';
-        }
-        render(); // Re-render to apply date filters to the new view
-    }
 
     // --- RENDER MASTER ---
     window.render = function() {
-        const dateRange = getDateRange();
+        let income = 0; 
+        let expense = 0;
         
-        // 1. GLOBAL BALANCE (Not affected by date filter)
-        let currentBalance = 0;
         localState.transactions.forEach(t => {
-            if (t.type === 'income') currentBalance += t.amount;
-            if (t.type === 'expense') currentBalance -= t.amount;
-            if (t.type === 'transfer') {
-                if(t.transferDir === 'in') currentBalance -= t.amount; 
-                if(t.transferDir === 'out') currentBalance += t.amount; 
-            }
-        });
-        document.getElementById('displayBalance').textContent = formatMoney(currentBalance);
-
-        // 2. FILTER TRANSACTIONS
-        let filteredTrans = localState.transactions;
-        if (dateRange) {
-            filteredTrans = localState.transactions.filter(t => {
-                const tDate = new Date(t.date + 'T00:00:00');
-                return tDate >= dateRange.start && tDate <= dateRange.end;
-            });
-        }
-
-        if (currentView === 'dashboard') {
-            renderDashboard(filteredTrans);
-        } else {
-            renderReports(filteredTrans);
-        }
-    }
-
-    // --- RENDER DASHBOARD ---
-    function renderDashboard(filteredTrans) {
-        let income = 0; let expense = 0; let netVault = 0;
-        
-        filteredTrans.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
-            if (t.type === 'transfer') {
-                if (t.transferDir === 'in') netVault += t.amount;
-                else if (t.transferDir === 'out') netVault -= t.amount;
-            }
         });
 
+        // Math: Available = Income - Expense
+        const currentBalance = income - expense;
+
+        document.getElementById('displayBalance').textContent = formatMoney(currentBalance);
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
-        
-        const vaultEl = document.getElementById('displayVaultFlow');
-        if (netVault > 0) { vaultEl.textContent = '+' + formatMoney(netVault); }
-        else if (netVault < 0) { vaultEl.textContent = formatMoney(netVault).replace('$-', '-$'); }
-        else { vaultEl.textContent = '$0.00'; }
-        vaultEl.className = ''; 
 
-        // Vaults
-        const trackerList = document.getElementById('trackerList');
-        trackerList.innerHTML = '';
-        let totalVaulted = 0;
-        localState.vaults.forEach(v => {
-            totalVaulted += v.current;
-            const pct = Math.min(100, (v.current / v.goal) * 100);
-            const vaultTrans = localState.transactions.filter(t => 
-                t.type === 'transfer' && (t.vaultId === v.id || t.payee.includes(v.name))
-            ).slice(0, 5);
-
-            let historyHTML = '';
-            vaultTrans.forEach(vt => {
-                const isDeposit = vt.transferDir === 'in';
-                const color = isDeposit ? 'text-green' : 'text-red';
-                const sign = isDeposit ? '+' : '-';
-                historyHTML += `<li class="vault-history-item"><span>${vt.date}</span><span class="${color}">${sign}${formatMoney(vt.amount)}</span></li>`;
-            });
-
-            trackerList.innerHTML += `
-                <div class="tracker-card" onclick="toggleVaultDetails('${v.id}')">
-                    <div class="tracker-top">
-                        <div class="tracker-name"><span class="lock-icon">🔒</span><span>${v.name}</span></div>
-                        <div><span style="color:var(--text-muted)">${formatMoney(v.current)} / ${formatMoney(v.goal)}</span></div>
-                    </div>
-                    <div class="tracker-bar-bg"><div class="tracker-bar-fill" style="width: ${pct}%"></div></div>
-                    <div id="vault-details-${v.id}" class="vault-details" onclick="event.stopPropagation()">
-                        <div class="vault-actions">
-                            <button class="btn-vault-action btn-deposit" onclick="openTransferModal('${v.id}', '${v.name}', 'in')">Deposit (+)</button>
-                            <button class="btn-vault-action btn-withdraw" onclick="openTransferModal('${v.id}', '${v.name}', 'out')">Withdraw (-)</button>
-                        </div>
-                        <ul class="vault-history-list">${historyHTML.length > 0 ? historyHTML : '<li class="vault-history-item">No history yet</li>'}</ul>
-                    </div>
-                </div>`;
-        });
-        document.getElementById('displayVaultTotal').innerText = formatMoney(totalVaulted);
-
-        // Logs
+        // Render Log
         const logList = document.getElementById('transactionList');
         logList.innerHTML = '';
-        if(filteredTrans.length === 0) logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions</li>';
         
-        filteredTrans.forEach(t => {
+        if(localState.transactions.length === 0) {
+            logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions this period. Start by resetting the week!</li>';
+        }
+
+        localState.transactions.forEach(t => {
             let colorClass = 'text-main'; let sign = '';
             if(t.type === 'income') { colorClass = 'text-green'; sign = '+'; }
             if(t.type === 'expense') { colorClass = 'text-red'; sign = '-'; }
-            if(t.type === 'transfer') { colorClass = 'text-orange'; sign = ''; } 
             
-            let catString = t.categories ? t.categories.map(c => c.name).join(', ') : '';
-            let metaString = t.purpose ? `${t.purpose} <span style="opacity:0.6">(${catString})</span>` : `<span style="opacity:0.6">${catString}</span>`;
+            let metaString = t.purpose || "";
             
             logList.innerHTML += `
-                <li class="log-item" onclick="routeEdit('${t.id}')">
+                <li class="log-item" onclick="editTransaction('${t.id}')">
                     <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta"><span>${t.date}</span> &bull; ${metaString}</div></div>
                     <div class="log-amount ${colorClass}">${sign}${formatMoney(t.amount)}</div>
                 </li>`;
         });
     }
 
-    // --- RENDER REPORTS ---
-    function renderReports(filteredTrans) {
-        const reportList = document.getElementById('reportList');
-        reportList.innerHTML = '';
-        
-        // 1. Aggregate Data
-        let catTotals = {};
-        let totalExpense = 0;
-
-        filteredTrans.forEach(t => {
-            if(t.type === 'expense') {
-                if(t.categories && t.categories.length > 0) {
-                    t.categories.forEach(cat => {
-                        if(!catTotals[cat.name]) catTotals[cat.name] = 0;
-                        const splitAmt = (t.amount * cat.pct) / 100;
-                        catTotals[cat.name] += splitAmt;
-                        totalExpense += splitAmt;
-                    });
-                }
-            }
-        });
-
-        if(totalExpense === 0) {
-            reportList.innerHTML = '<div style="text-align:center; padding:20px; color:#555;">No expenses in this period</div>';
+    // --- WEEKLY RESET LOGIC ---
+    window.resetWeek = async function() {
+        const pin = prompt("Admin Password Required:");
+        if (pin !== "0703") {
+            alert("Incorrect Password");
             return;
         }
 
-        // 2. Sort & Display
-        const sortedCats = Object.keys(catTotals).sort((a,b) => catTotals[b] - catTotals[a]);
+        const amountStr = prompt("How much funding for this week?");
+        const amount = parseFloat(amountStr);
+        
+        if (!amount || isNaN(amount)) {
+            alert("Invalid amount.");
+            return;
+        }
 
-        sortedCats.forEach(catName => {
-            const amount = catTotals[catName];
-            const pct = (amount / totalExpense) * 100;
-            
-            reportList.innerHTML += `
-                <div class="report-card">
-                    <div class="report-header">
-                        <span>${catName}</span>
-                        <span>${formatMoney(amount)}</span>
-                    </div>
-                    <div class="report-bar-bg"><div class="report-bar-fill" style="width: ${pct}%"></div></div>
-                    <div class="report-sub">
-                        <span>${pct.toFixed(1)}% of spending</span>
-                    </div>
-                </div>`;
-        });
-    }
+        if(confirm(`This will DELETE all current transactions and start a new week with $${amount}. Are you sure?`)) {
+            try {
+                // 1. Delete all current docs
+                const batch = writeBatch(db);
+                localState.transactions.forEach(t => {
+                    const docRef = doc(db, "transactions", t.id);
+                    batch.delete(docRef);
+                });
+                await batch.commit();
 
-    // --- HELPERS & LOGIC ---
-    window.updateSplitMath = function() {
-        const total = parseFloat(document.getElementById('inputAmount').value) || 0;
-        const rows = document.querySelectorAll('.split-row');
-        rows.forEach(row => {
-            const pctInput = row.querySelector('.split-cat-pct');
-            const display = row.querySelector('.split-amt');
-            if(pctInput && display) {
-                const pct = parseFloat(pctInput.value) || 0;
-                display.innerText = formatMoney((total * pct) / 100);
+                // 2. Add Funding Transaction
+                await addDoc(collection(db, "transactions"), {
+                    date: getLocalDate(),
+                    payee: "Weekly Funding",
+                    purpose: "Reset",
+                    amount: amount,
+                    type: 'income',
+                    createdAt: new Date().toISOString()
+                });
+
+                alert("Week Reset Successful!");
+            } catch(e) {
+                alert("Error resetting: " + e.message);
             }
-        });
+        }
     }
 
+    // --- UTILS ---
     window.getLocalDate = function() {
         const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().slice(0,10);
     }
 
-    window.updateCategoryDropdowns = function() {
-        const selects = document.querySelectorAll('select[id="inputCategory"], .split-cat-select');
-        selects.forEach(sel => {
-            const currentVal = sel.value; 
-            sel.innerHTML = '<option value="Uncategorized">Select...</option>';
-            localState.categories.forEach(cat => { sel.innerHTML += `<option value="${cat}">${cat}</option>`; });
-            if (currentVal && currentVal !== 'Uncategorized') sel.value = currentVal;
-        });
-    }
-
-    window.addNewCategory = async function() {
-        const name = prompt("Enter new category name:");
-        if (name && name.trim() !== "") await addDoc(collection(db, "categories"), { name: name.trim() });
-    }
-
-    window.toggleVaultDetails = function(id) {
-        const el = document.getElementById(`vault-details-${id}`);
-        document.querySelectorAll('.vault-details').forEach(d => { if(d.id !== `vault-details-${id}`) d.style.display = 'none'; });
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    }
-
-    window.routeEdit = function(id) {
-        const t = localState.transactions.find(x => x.id === id);
-        if(!t) return;
-        if(t.type === 'transfer') editTransfer(t); else editTransaction(t);
-    }
+    window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+    window.closeMainModal = function() { document.getElementById('mainModal').style.display = 'none'; }
 
     // --- MODAL & TRANSACTION LOGIC ---
     window.openMainModal = function() {
@@ -591,13 +334,13 @@
         document.getElementById('inputAmount').value = '';
         document.getElementById('inputPayee').value = '';
         document.getElementById('inputPurpose').value = '';
-        document.getElementById('inputCategory').value = 'Uncategorized';
-        document.getElementById('toggleSplit').checked = false;
-        window.toggleSplitMode();
         document.getElementById('mainModal').style.display = 'flex';
     }
 
-    window.editTransaction = function(t) {
+    window.editTransaction = function(id) {
+        const t = localState.transactions.find(x => x.id === id);
+        if(!t) return;
+
         editingId = t.id;
         document.getElementById('modalTitle').innerText = "Edit Transaction";
         document.getElementById('btnSave').innerText = "Update Transaction";
@@ -609,23 +352,6 @@
         document.getElementById('inputPayee').value = t.payee;
         document.getElementById('inputPurpose').value = t.purpose || '';
         
-        if(t.categories && t.categories.length > 1) {
-            document.getElementById('toggleSplit').checked = true;
-            window.toggleSplitMode();
-            document.getElementById('splitRows').innerHTML = ''; 
-            t.categories.forEach(c => {
-               let options = '<option value="Uncategorized">Select...</option>';
-               localState.categories.forEach(cat => options += `<option value="${cat}">${cat}</option>`);
-               const amountVal = (t.amount * c.pct) / 100;
-               document.getElementById('splitRows').innerHTML += `<div class="split-row"><select class="split-cat-select" style="flex:2;">${options}</select><input type="number" class="split-cat-pct" placeholder="%" style="flex:1;" value="${c.pct}" oninput="updateSplitMath()"><span class="split-amt">${formatMoney(amountVal)}</span><button type="button" class="btn-small" onclick="this.parentElement.remove()">x</button></div>`;
-                const rows = document.querySelectorAll('.split-row');
-                rows[rows.length-1].querySelector('select').value = c.name;
-            });
-        } else {
-            document.getElementById('toggleSplit').checked = false;
-            window.toggleSplitMode();
-            if(t.categories && t.categories.length > 0) document.getElementById('inputCategory').value = t.categories[0].name;
-        }
         document.getElementById('mainModal').style.display = 'flex';
     }
 
@@ -635,26 +361,10 @@
         const amount = parseFloat(document.getElementById('inputAmount').value);
         const payee = document.getElementById('inputPayee').value;
         const purpose = document.getElementById('inputPurpose').value;
-        const isSplit = document.getElementById('toggleSplit').checked;
 
         if(!amount || !payee || !date) return alert("Fill all fields");
 
-        let categories = [];
-        if (!isSplit) {
-            categories.push({ name: document.getElementById('inputCategory').value, pct: 100 });
-        } else {
-            const rows = document.querySelectorAll('.split-row');
-            let totalPct = 0;
-            rows.forEach(row => {
-                const name = row.querySelector('.split-cat-select').value;
-                const pct = parseFloat(row.querySelector('.split-cat-pct').value) || 0;
-                totalPct += pct;
-                categories.push({ name, pct });
-            });
-            if(Math.abs(totalPct - 100) > 0.1) return alert(`Split percentages sum to ${totalPct}%. They must total 100%.`);
-        }
-
-        const data = { date, payee, purpose, amount, type, categories, updatedAt: new Date().toISOString() };
+        const data = { date, payee, purpose, amount, type, updatedAt: new Date().toISOString() };
 
         try {
             if(editingId) { await updateDoc(doc(db, "transactions", editingId), data); }
@@ -670,127 +380,10 @@
             document.getElementById('mainModal').style.display = 'none';
         }
     }
-
-    window.openTransferModal = function(id, name, dir) {
-        editingId = null;
-        document.getElementById('transferTitle').innerText = "Vault Transfer";
-        document.getElementById('btnTransferSave').innerText = "Confirm Transfer";
-        document.getElementById('btnTransferDelete').style.display = 'none';
-        
-        document.getElementById('transferProjectId').value = id;
-        document.getElementById('transferTargetName').innerText = `Transferring for: ${name}`;
-        if(dir) document.getElementById('transferDir').value = dir;
-        document.getElementById('transferDate').value = getLocalDate();
-        document.getElementById('transferAmount').value = '';
-        document.getElementById('transferModal').style.display = 'flex';
-    }
-
-    window.editTransfer = function(t) {
-        editingId = t.id;
-        document.getElementById('transferTitle').innerText = "Edit Transfer";
-        document.getElementById('btnTransferSave').innerText = "Update Transfer";
-        document.getElementById('btnTransferDelete').style.display = 'block';
-        document.getElementById('transferProjectId').value = t.vaultId;
-        const v = localState.vaults.find(x => x.id === t.vaultId);
-        document.getElementById('transferTargetName').innerText = v ? `Transferring for: ${v.name}` : 'Unknown Vault';
-        document.getElementById('transferDir').value = t.transferDir;
-        document.getElementById('transferDate').value = t.date;
-        document.getElementById('transferAmount').value = t.amount;
-        document.getElementById('transferModal').style.display = 'flex';
-    }
-
-    window.executeTransfer = async function() {
-        const id = document.getElementById('transferProjectId').value;
-        const amount = parseFloat(document.getElementById('transferAmount').value);
-        const dir = document.getElementById('transferDir').value;
-        const date = document.getElementById('transferDate').value;
-        if(!amount) return;
-
-        const project = localState.vaults.find(v => v.id === id);
-        if(!project) return;
-        
-        try {
-            let currentVaultBalance = project.current;
-            if(editingId) {
-                const oldT = localState.transactions.find(x => x.id === editingId);
-                if(oldT) { if(oldT.transferDir === 'in') currentVaultBalance -= oldT.amount; else currentVaultBalance += oldT.amount; }
-            }
-            if(dir === 'in') currentVaultBalance += amount; else currentVaultBalance -= amount;
-
-            await updateDoc(doc(db, "vaults", id), { current: currentVaultBalance });
-            
-            const data = { date: date, payee: (dir === 'in' ? "To Vault: " : "From Vault: ") + project.name, amount: amount, type: 'transfer', transferDir: dir, vaultId: id, categories: [{name: 'Transfer', pct: 100}] };
-
-            if(editingId) await updateDoc(doc(db, "transactions", editingId), data);
-            else { data.createdAt = new Date().toISOString(); await addDoc(collection(db, "transactions"), data); }
-            
-            document.getElementById('transferModal').style.display = 'none';
-        } catch(e) { alert("Transfer failed: " + e.message); }
-    }
-
-    window.deleteTransfer = async function() {
-        if(!editingId) return;
-        if(!confirm("Delete this transfer and revert balance?")) return;
-        const t = localState.transactions.find(x => x.id === editingId);
-        const v = localState.vaults.find(x => x.id === t.vaultId);
-        if(t && v) {
-            let newBalance = v.current;
-            if(t.transferDir === 'in') newBalance -= t.amount; else newBalance += t.amount;
-            await updateDoc(doc(db, "vaults", v.id), { current: newBalance });
-        }
-        await deleteDoc(doc(db, "transactions", editingId));
-        document.getElementById('transferModal').style.display = 'none';
-    }
-
-    window.createNewProject = async function() {
-        const name = document.getElementById('newProjName').value;
-        const goal = parseFloat(document.getElementById('newProjGoal').value);
-        if(!name || !goal) return;
-        try { await addDoc(collection(db, "vaults"), { name, current: 0, goal }); document.getElementById('newProjectModal').style.display = 'none'; } catch(e) { console.error(e); }
-    }
-
-    window.handleDateFilterChange = function() {
-        const val = document.getElementById('dateFilter').value;
-        const customDiv = document.getElementById('customDateRange');
-        if (val === 'custom') customDiv.style.display = 'flex'; else { customDiv.style.display = 'none'; render(); }
-    }
-    window.getDateRange = function() {
-        const filter = document.getElementById('dateFilter').value;
-        
-        if (filter === 'all') return null;
-
-        const now = new Date(); const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-        let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        if (filter === 'last7') start.setDate(now.getDate() - 6);
-        else if (filter === 'mtd') start.setDate(1);
-        else if (filter === 'ytd') start.setMonth(0, 1);
-        else if (filter === 'lastMonth') { return { start: new Date(now.getFullYear(), now.getMonth() - 1, 1), end: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59) }; }
-        else if (filter === 'custom') {
-            const sVal = document.getElementById('customStart').value; const eVal = document.getElementById('customEnd').value;
-            if (!sVal || !eVal) return null;
-            return { start: new Date(sVal + 'T00:00:00'), end: new Date(eVal + 'T23:59:59') };
-        }
-        return { start, end };
-    }
-    window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
-    window.closeMainModal = function() { document.getElementById('mainModal').style.display = 'none'; }
-    window.toggleSplitMode = function() {
-        const isSplit = document.getElementById('toggleSplit').checked;
-        document.getElementById('singleCategoryMode').style.display = isSplit ? 'none' : 'flex';
-        document.getElementById('splitCategoryMode').style.display = isSplit ? 'block' : 'none';
-    }
-    window.addSplitRow = function() {
-        let options = '<option value="Uncategorized">Select...</option>';
-        localState.categories.forEach(cat => options += `<option value="${cat}">${cat}</option>`);
-        document.getElementById('splitRows').innerHTML += `<div class="split-row"><select class="split-cat-select" style="flex:2;">${options}</select><input type="number" class="split-cat-pct" placeholder="%" style="flex:1;" oninput="updateSplitMath()"><span class="split-amt" style="flex:1; text-align:right; font-size:0.9rem; padding-top:10px; color:#aaa;">$0.00</span><button type="button" class="btn-small" onclick="this.parentElement.remove()">x</button></div>`;
-    }
-    window.openNewProjectModal = function() { document.getElementById('newProjectModal').style.display = 'flex'; }
     
     // Init
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('inputDate').value = getLocalDate();
-        window.toggleSplitMode();
-        switchView('dashboard');
         checkAuth();
     });
 </script>
