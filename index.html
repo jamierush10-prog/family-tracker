@@ -16,32 +16,17 @@
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .dashboard { width: 100%; max-width: 650px; display: none; }
         
-        /* LOCK SCREEN */
-        #lockScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
-        .dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--text-muted); transition: background 0.2s; }
-        .dot.filled { background: var(--accent-blue); border-color: var(--accent-blue); }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 300px; width: 100%; }
-        .key { 
-            width: 70px; height: 70px; border-radius: 50%; background: var(--card-bg); 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.5rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color);
-            margin: 0 auto; user-select: none;
-        }
-        .key:active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
-        .key-del { background: transparent; border: none; font-size: 1rem; color: var(--text-muted); }
-
-        /* HEADER & RESET */
-        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .app-title { font-size: 1.2rem; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
-        .btn-reset { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-orange); color: var(--accent-orange); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        /* HEADER & STATUS */
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:15px; border-bottom:1px solid var(--border-color); }
+        .app-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+        .status-badge { font-size: 0.7rem; background: #334155; padding: 4px 8px; border-radius: 4px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: inline-block; }
+        
+        /* SIGN OUT BUTTON */
+        .btn-signout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; transition: all 0.2s; }
+        .btn-signout:active { background: var(--input-bg); color: white; }
 
         /* Summary Card */
-        .summary-card { background-color: var(--card-bg); padding: 30px 25px; border-radius: 16px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); }
+        .summary-card { background-color: var(--card-bg); padding: 30px 25px; border-radius: 16px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); }
         .summary-label { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;}
         .summary-balance { font-size: 4rem; font-weight: 700; margin: 10px 0; letter-spacing: -2px; color: var(--text-main); }
         .flow-container { display: flex; justify-content: center; gap: 40px; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; }
@@ -49,20 +34,39 @@
         .flow-item div:last-child { font-size: 1.1rem; font-weight: 600; }
         .text-green { color: var(--accent-green); } .text-red { color: var(--accent-red); }
 
-        /* Section Header */
-        .section-header { margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 600; font-size: 1.1rem; }
+        /* ACTION BUTTONS (ADMIN ONLY) */
+        .admin-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .btn-big { padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: center; font-size: 0.95rem; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-add { background: var(--accent-blue); color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+        .btn-reset { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-orange); color: var(--accent-orange); }
 
-        /* Logs */
-        .log-list { list-style: none; padding: 0; margin: 0; padding-bottom: 100px; }
+        /* LOGS */
+        .section-header { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
+        .log-list { list-style: none; padding: 0; margin: 0; padding-bottom: 50px; }
         .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
         .log-item:active { background-color: #263345; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
         .log-amount { font-weight: 600; font-size: 1rem; }
-        
-        /* Modals & FAB */
-        .fab { position: fixed; bottom: 40px; right: 20px; background-color: var(--accent-blue); color: white; width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 32px; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; z-index: 90; }
+
+        /* FAMILY MODE HIDING RULES */
+        body.family-mode .admin-controls { display: none !important; }
+        body.family-mode .log-list { display: none !important; }
+        body.family-mode .section-header { display: none !important; }
+        body.family-mode .log-hint { display: none !important; }
+
+        /* LOCK SCREEN */
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
+        .dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--text-muted); transition: background 0.2s; }
+        .dot.filled { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 300px; width: 100%; }
+        .key { width: 70px; height: 70px; border-radius: 50%; background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color); margin: 0 auto; user-select: none; }
+        .key:active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+        .key-del { background: transparent; border: none; font-size: 1rem; color: var(--text-muted); }
+
+        /* MODAL */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 100; }
         .modal-card { background: var(--card-bg); width: 90%; max-width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -72,18 +76,12 @@
         .btn-primary { background: var(--text-main); color: var(--bg-color); width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .btn-delete { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none; }
         .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; width: 100%; margin-top: 15px; }
-        
-        /* Family Mode Hiding */
-        body.family-mode .log-list, 
-        body.family-mode .btn-reset,
-        body.family-mode .fab,
-        body.family-mode .log-hint { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="lockScreen">
-    <div style="margin-bottom:30px; font-weight:600; letter-spacing:2px; font-size:0.9rem; color:#888;">PAYCHECK 2 PAYCHECK</div>
+    <div style="margin-bottom:30px; font-weight:600; letter-spacing:2px; font-size:0.9rem; color:#888;">ENTER PIN</div>
     <div class="pin-dots">
         <div class="dot" id="dot1"></div>
         <div class="dot" id="dot2"></div>
@@ -107,10 +105,12 @@
 </div>
 
 <div class="dashboard" id="mainDashboard">
-    
     <div class="app-header">
-        <div class="app-title">Paycheck 2 Paycheck</div>
-        <button class="btn-reset" onclick="resetWeek()">Weekly Reset ↺</button>
+        <div>
+            <div class="app-title">Paycheck 2 Paycheck</div>
+            <div class="status-badge" id="modeBadge">Loading...</div>
+        </div>
+        <button class="btn-signout" onclick="signOut()">Sign Out</button>
     </div>
 
     <div class="summary-card">
@@ -122,12 +122,15 @@
         </div>
     </div>
 
+    <div class="admin-controls">
+        <button class="btn-big btn-add" onclick="openMainModal()">+ New Transaction</button>
+        <button class="btn-big btn-reset" onclick="resetWeek()">Weekly Reset ↺</button>
+    </div>
+
     <div class="section-header">Transaction Log</div>
-    <div class="log-hint" style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap a transaction to edit or delete</div>
+    <div class="log-hint" style="font-size:0.8rem; color:#666; margin-bottom:10px; font-style:italic;">Tap to edit</div>
     <ul class="log-list" id="transactionList"></ul>
 </div>
-
-<button class="fab" id="fabAdd" onclick="openMainModal()">+</button>
 
 <div class="modal-overlay" id="mainModal">
     <div class="modal-card">
@@ -148,7 +151,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBLFyr142xhL8OZroHAnsGGSWX7hPf1UG0",
@@ -212,9 +215,19 @@
         document.getElementById('mainDashboard').style.display = 'block';
         if (level === 'family') {
             document.body.classList.add('family-mode');
+            document.getElementById('modeBadge').innerText = "Family View";
         } else {
             document.body.classList.remove('family-mode');
+            document.getElementById('modeBadge').innerText = "Admin Mode";
         }
+    }
+
+    window.signOut = function() {
+        localStorage.removeItem('authLevel');
+        enteredPin = "";
+        updateDots();
+        document.getElementById('mainDashboard').style.display = 'none';
+        document.getElementById('lockScreen').style.display = 'flex';
     }
 
     function checkAuth() {
@@ -240,14 +253,12 @@
             if (t.type === 'expense') expense += t.amount;
         });
 
-        // Math: Available = Income - Expense
         const currentBalance = income - expense;
 
         document.getElementById('displayBalance').textContent = formatMoney(currentBalance);
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
 
-        // Render Log
         const logList = document.getElementById('transactionList');
         logList.innerHTML = '';
         
@@ -270,25 +281,20 @@
         });
     }
 
-    // --- WEEKLY RESET LOGIC ---
+    // --- LOGIC ---
     window.resetWeek = async function() {
-        const pin = prompt("Admin Password Required:");
-        if (pin !== "0703") {
-            alert("Incorrect Password");
+        // Double check auth again before destructive action
+        if (localStorage.getItem('authLevel') !== 'master') {
+            alert("Admin access required.");
             return;
         }
 
-        const amountStr = prompt("How much funding for this week?");
+        const amountStr = prompt("Start New Week: How much funding?");
         const amount = parseFloat(amountStr);
-        
-        if (!amount || isNaN(amount)) {
-            alert("Invalid amount.");
-            return;
-        }
+        if (!amount || isNaN(amount)) return;
 
-        if(confirm(`This will DELETE all current transactions and start a new week with $${amount}. Are you sure?`)) {
+        if(confirm(`This will DELETE all current transactions and start a new week with $${amount}. Confirm?`)) {
             try {
-                // 1. Delete all current docs
                 const batch = writeBatch(db);
                 localState.transactions.forEach(t => {
                     const docRef = doc(db, "transactions", t.id);
@@ -296,7 +302,6 @@
                 });
                 await batch.commit();
 
-                // 2. Add Funding Transaction
                 await addDoc(collection(db, "transactions"), {
                     date: getLocalDate(),
                     payee: "Weekly Funding",
@@ -305,15 +310,10 @@
                     type: 'income',
                     createdAt: new Date().toISOString()
                 });
-
-                alert("Week Reset Successful!");
-            } catch(e) {
-                alert("Error resetting: " + e.message);
-            }
+            } catch(e) { alert("Error resetting: " + e.message); }
         }
     }
 
-    // --- UTILS ---
     window.getLocalDate = function() {
         const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().slice(0,10);
@@ -322,7 +322,6 @@
     window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
     window.closeMainModal = function() { document.getElementById('mainModal').style.display = 'none'; }
 
-    // --- MODAL & TRANSACTION LOGIC ---
     window.openMainModal = function() {
         editingId = null;
         document.getElementById('modalTitle').innerText = "New Transaction";
@@ -351,7 +350,6 @@
         document.getElementById('inputAmount').value = t.amount;
         document.getElementById('inputPayee').value = t.payee;
         document.getElementById('inputPurpose').value = t.purpose || '';
-        
         document.getElementById('mainModal').style.display = 'flex';
     }
 
