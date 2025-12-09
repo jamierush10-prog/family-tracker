@@ -166,7 +166,18 @@
         <h2 style="margin-top:0; font-size:1.2rem;" id="modalTitle">New Transaction</h2>
         <div class="form-row">
             <div><label class="form-label">Type</label><select id="inputType"><option value="expense">Expense (Out)</option><option value="income">Income (In)</option></select></div>
-            <div><label class="form-label">Date</label><input type="date" id="inputDate"></div>
+            <div>
+                <label class="form-label">Day</label>
+                <select id="inputDay">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+            </div>
         </div>
         <div class="form-group"><label class="form-label">Amount</label><input type="number" id="inputAmount" placeholder="0.00" step="0.01"></div>
         <div class="form-group"><label class="form-label">Payee</label><input type="text" id="inputPayee" placeholder="e.g. Costco"></div>
@@ -298,16 +309,15 @@
             resetEl.innerText = "";
         }
 
-        // GENERATE DAILY PACING ROW & COLOR LOGIC
+        // GENERATE DAILY PACING ROW
         const dailyRow = document.getElementById('dailyRow');
         dailyRow.innerHTML = '';
         
         let accumulatedTarget = 0;
         let accumulatedSpend = 0;
         
-        // Accurate Local Date for Comparison
         const now = new Date();
-        const nowStr = getLocalDate(); // YYYY-MM-DD
+        const nowStr = getLocalDate();
 
         if(fundingTx) {
             const parts = fundingTx.date.split('-');
@@ -329,13 +339,13 @@
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
-                // Cumulative tracking for Main Balance color
+                // Cumulative tracking for Main Balance color (still useful)
                 if (isoDate <= nowStr) {
                     accumulatedTarget += dayTarget;
                     accumulatedSpend += daySpend;
                 }
 
-                // Color Logic (ISOLATED DAY LOGIC)
+                // Color Logic - STRICT DAILY MODE
                 const isFuture = isoDate > nowStr;
                 let actualClass = 'text-green';
                 let valueText = formatMoneyNoDec(daySpend);
@@ -343,7 +353,7 @@
                 if (isFuture) {
                     actualClass = 'text-muted'; 
                 } else {
-                    // Simple Check: Did I spend more than TODAY's target?
+                    // Strict Day Check: Did spend exceed day target?
                     if (daySpend > dayTarget) actualClass = 'text-red';
                 }
 
@@ -371,6 +381,7 @@
         if (currentBalance < 0) {
             balanceEl.classList.add('text-red');
         } else if (accumulatedSpend > accumulatedTarget) {
+            // Keep the yellow warning on main balance if total pace is off
             balanceEl.classList.add('text-yellow');
         }
 
@@ -394,6 +405,11 @@
             
             let metaString = t.purpose || "";
             
+            // Format date to Day Name
+            const parts = t.date.split('-');
+            const d = new Date(parts[0], parts[1]-1, parts[2]);
+            const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
             let percentHtml = "";
             if (totalFunding > 0 && t.type === 'expense' && t.id !== fundingTx?.id) {
                 const pct = (t.amount / totalFunding) * 100;
@@ -405,7 +421,7 @@
 
             logList.innerHTML += `
                 <li class="log-item ${cursorClass}" ${clickAttr}>
-                    <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta"><span>${t.date}</span> &bull; ${metaString}</div></div>
+                    <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta"><span>${dayName}</span> &bull; ${metaString}</div></div>
                     <div class="log-right">
                         <div class="log-amount ${colorClass}">${sign}${formatMoney(t.amount)}</div>
                         ${percentHtml}
@@ -443,9 +459,36 @@
         }
     }
 
+    // UTILS - DATE HELPERS
     window.getLocalDate = function() {
         const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().slice(0,10);
+    }
+    
+    // Get Date String from Day Name relative to current week
+    // We calculate "This week's Tuesday" based on today's date
+    window.getDateFromDay = function(dayName) {
+        const dayMap = { "Sunday":0, "Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6 };
+        const targetDayIndex = dayMap[dayName];
+        
+        const now = new Date();
+        const currentDayIndex = now.getDay();
+        const diff = targetDayIndex - currentDayIndex;
+        
+        const targetDate = new Date(now);
+        targetDate.setDate(now.getDate() + diff);
+        
+        // Safety: If selecting a future day that is technically "next week", it might be safer to limit to past/today?
+        // But simplified logic: We just pick the day in the current calendar week window (Sun-Sat or Mon-Sun).
+        // Let's assume standard "nearest day".
+        
+        return targetDate.toISOString().slice(0,10);
+    }
+    
+    window.getDayNameFromDate = function(isoDate) {
+        const parts = isoDate.split('-');
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        return d.toLocaleDateString('en-US', { weekday: 'long' });
     }
 
     window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
@@ -459,7 +502,9 @@
         document.getElementById('btnDelete').style.display = 'none';
         
         document.getElementById('inputType').value = 'expense';
-        document.getElementById('inputDate').value = getLocalDate();
+        // Default to Today's Day Name
+        document.getElementById('inputDay').value = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+        
         document.getElementById('inputAmount').value = '';
         document.getElementById('inputPayee').value = '';
         document.getElementById('inputPurpose').value = '';
@@ -476,7 +521,9 @@
         document.getElementById('btnDelete').style.display = 'block';
 
         document.getElementById('inputType').value = t.type;
-        document.getElementById('inputDate').value = t.date;
+        // Set dropdown to day name derived from stored date
+        document.getElementById('inputDay').value = getDayNameFromDate(t.date);
+        
         document.getElementById('inputAmount').value = t.amount;
         document.getElementById('inputPayee').value = t.payee;
         document.getElementById('inputPurpose').value = t.purpose || '';
@@ -485,12 +532,15 @@
 
     window.saveTransaction = async function() {
         const type = document.getElementById('inputType').value;
-        const date = document.getElementById('inputDate').value;
+        const dayName = document.getElementById('inputDay').value;
         const amount = parseFloat(document.getElementById('inputAmount').value);
         const payee = document.getElementById('inputPayee').value;
         const purpose = document.getElementById('inputPurpose').value;
 
-        if(!amount || !payee || !date) return alert("Fill all fields");
+        if(!amount || !payee) return alert("Fill amount and payee");
+
+        // Convert Day Name -> Date String
+        const date = getDateFromDay(dayName);
 
         const data = { date, payee, purpose, amount, type, updatedAt: new Date().toISOString() };
 
@@ -511,7 +561,6 @@
     
     // Init
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('inputDate').value = getLocalDate();
         checkAuth();
     });
 </script>
