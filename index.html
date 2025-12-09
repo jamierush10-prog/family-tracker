@@ -43,20 +43,24 @@
         /* LOGS */
         .section-header { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
         .log-list { list-style: none; padding: 0; margin: 0; padding-bottom: 50px; }
-        .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; transition: background 0.2s; }
-        .log-item.clickable { cursor: pointer; }
-        .log-item.clickable:active { background-color: #263345; }
+        .log-item { background-color: var(--card-bg); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+        .log-item:active { background-color: #263345; }
         .log-left { display: flex; flex-direction: column; gap: 4px; }
         .log-payee { font-weight: 500; font-size: 1rem; }
         .log-meta { font-size: 0.8rem; color: var(--text-muted); }
+        
+        /* Updated Amount Column for Percentages */
+        .log-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
         .log-amount { font-weight: 600; font-size: 1rem; }
+        .log-pct { font-size: 0.75rem; color: #64748b; margin-top: 2px; font-weight: 500; }
 
         /* FAMILY MODE HIDING RULES */
-        /* Hidden: Add/Reset buttons, Floating Add Button, "Tap to edit" hint */
         body.family-mode .admin-controls { display: none !important; }
+        body.family-mode .log-list { display: block !important; } /* Family can see logs now */
+        body.family-mode .log-item { pointer-events: none; } /* But cannot click/edit */
         body.family-mode .fab { display: none !important; } 
-        body.family-mode .log-hint { display: none !important; } 
-        
+        body.family-mode .log-hint { display: none !important; }
+
         /* LOCK SCREEN */
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .pin-dots { display: flex; gap: 15px; margin-bottom: 40px; }
@@ -250,9 +254,19 @@
 
     // --- RENDER MASTER ---
     window.render = function() {
+        // SORTING: 1. Date Descending, 2. CreatedAt Descending (so newest on top same day)
+        localState.transactions.sort((a, b) => {
+            if (a.date !== b.date) return new Date(b.date) - new Date(a.date);
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+
         let income = 0; 
         let expense = 0;
         
+        // Find Funding Row for % Calc
+        const fundingTx = localState.transactions.find(t => t.purpose === "Reset");
+        const totalFunding = fundingTx ? fundingTx.amount : 0;
+
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
@@ -271,7 +285,6 @@
             logList.innerHTML = '<li style="text-align:center; padding:20px; color:#555;">No transactions this period. Start by resetting the week!</li>';
         }
 
-        // Auth check for Clickability
         const isMaster = localStorage.getItem('authLevel') === 'master';
 
         localState.transactions.forEach(t => {
@@ -281,14 +294,23 @@
             
             let metaString = t.purpose || "";
             
-            // If Master: Click to edit. If Family: No click.
+            // Percentage Logic
+            let percentHtml = "";
+            if (totalFunding > 0 && t.type === 'expense' && t.id !== fundingTx?.id) {
+                const pct = (t.amount / totalFunding) * 100;
+                if (pct > 0.1) percentHtml = `<div class="log-pct">${pct.toFixed(1)}%</div>`;
+            }
+
             const clickAttr = isMaster ? `onclick="editTransaction('${t.id}')"` : "";
             const cursorClass = isMaster ? "clickable" : "";
 
             logList.innerHTML += `
                 <li class="log-item ${cursorClass}" ${clickAttr}>
                     <div class="log-left"><div class="log-payee">${t.payee}</div><div class="log-meta"><span>${t.date}</span> &bull; ${metaString}</div></div>
-                    <div class="log-amount ${colorClass}">${sign}${formatMoney(t.amount)}</div>
+                    <div class="log-right">
+                        <div class="log-amount ${colorClass}">${sign}${formatMoney(t.amount)}</div>
+                        ${percentHtml}
+                    </div>
                 </li>`;
         });
     }
