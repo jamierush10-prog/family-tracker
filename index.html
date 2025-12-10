@@ -293,7 +293,7 @@
 
     // --- RENDER MASTER ---
     window.render = function() {
-        // Sort: Date descending, then created descending
+        // Sort
         localState.transactions.sort((a, b) => {
             if (a.date !== b.date) return new Date(b.date) - new Date(a.date);
             return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -321,6 +321,9 @@
         const dailyRow = document.getElementById('dailyRow');
         dailyRow.innerHTML = '';
         
+        let accumulatedTarget = 0;
+        let accumulatedSpend = 0;
+        
         // Accurate Local Date for Comparison
         const now = new Date();
         const nowStr = getLocalDate(); // YYYY-MM-DD
@@ -345,6 +348,12 @@
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
+                // Cumulative tracking for Main Balance color (still useful)
+                if (isoDate <= nowStr) {
+                    accumulatedTarget += dayTarget;
+                    accumulatedSpend += daySpend;
+                }
+
                 // Color Logic - STRICT DAILY MODE
                 const isFuture = isoDate > nowStr;
                 let actualClass = 'text-green';
@@ -353,6 +362,7 @@
                 if (isFuture) {
                     actualClass = 'text-muted'; 
                 } else {
+                    // Strict Day Check: Did spend exceed day target?
                     if (daySpend > dayTarget) actualClass = 'text-red';
                 }
 
@@ -366,7 +376,7 @@
             }
         }
 
-        // MAIN TOTALS
+        // MAIN TOTALS & COLORS
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
@@ -375,7 +385,14 @@
         const currentBalance = income - expense;
         const balanceEl = document.getElementById('displayBalance');
         balanceEl.textContent = formatMoney(currentBalance);
-        balanceEl.className = currentBalance < 0 ? 'summary-balance text-red' : 'summary-balance';
+        
+        balanceEl.className = 'summary-balance';
+        if (currentBalance < 0) {
+            balanceEl.classList.add('text-red');
+        } else if (accumulatedSpend > accumulatedTarget) {
+            // Keep the yellow warning on main balance if total pace is off
+            balanceEl.classList.add('text-yellow');
+        }
 
         document.getElementById('displayIncome').textContent = '+' + formatMoney(income);
         document.getElementById('displayExpense').textContent = '-' + formatMoney(expense);
@@ -533,6 +550,7 @@
 
         if(!amount || !payee) return alert("Fill amount and payee");
 
+        // Convert Day Name -> Date String
         const date = getDateFromDay(dayName);
 
         const data = { date, payee, purpose, amount, type, updatedAt: new Date().toISOString() };
