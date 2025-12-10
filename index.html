@@ -317,16 +317,13 @@
             resetEl.innerText = "";
         }
 
-        // GENERATE DAILY PACING ROW & COLOR LOGIC
+        // GENERATE DAILY PACING ROW
         const dailyRow = document.getElementById('dailyRow');
         dailyRow.innerHTML = '';
         
         let accumulatedTarget = 0;
         let accumulatedSpend = 0;
-        
-        // Accurate Local Date for Comparison
-        const now = new Date();
-        const nowStr = getLocalDate(); // YYYY-MM-DD
+        const nowStr = getLocalDate();
 
         if(fundingTx) {
             const parts = fundingTx.date.split('-');
@@ -342,29 +339,21 @@
                 const dayName = dayNames[d.getDay()];
                 const dayTarget = totalFunding * pctMap[dayName];
                 
-                // Calc Actual Spend for this day
+                // Calc Actual Spend
                 let daySpend = 0;
                 localState.transactions.forEach(t => {
                     if(t.type === 'expense' && t.date === isoDate) daySpend += t.amount;
                 });
 
-                // Cumulative tracking for Main Balance color (still useful)
+                // Cumulative tracking for Main Balance color (Yellow warning)
                 if (isoDate <= nowStr) {
                     accumulatedTarget += dayTarget;
                     accumulatedSpend += daySpend;
                 }
 
-                // Color Logic - STRICT DAILY MODE
-                const isFuture = isoDate > nowStr;
-                let actualClass = 'text-green';
-                let valueText = formatMoneyNoDec(daySpend);
-                
-                if (isFuture) {
-                    actualClass = 'text-muted'; 
-                } else {
-                    // Strict Day Check: Did spend exceed day target?
-                    if (daySpend > dayTarget) actualClass = 'text-red';
-                }
+                // Strict Daily Color Logic (No Future Gray)
+                const actualClass = daySpend > dayTarget ? 'text-red' : 'text-green';
+                const valueText = formatMoneyNoDec(daySpend);
 
                 dailyRow.innerHTML += `
                     <div class="daily-card">
@@ -376,7 +365,7 @@
             }
         }
 
-        // MAIN TOTALS & COLORS
+        // MAIN TOTALS
         localState.transactions.forEach(t => {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expense += t.amount;
@@ -390,7 +379,6 @@
         if (currentBalance < 0) {
             balanceEl.classList.add('text-red');
         } else if (accumulatedSpend > accumulatedTarget) {
-            // Keep the yellow warning on main balance if total pace is off
             balanceEl.classList.add('text-yellow');
         }
 
@@ -411,7 +399,6 @@
         localState.transactions.forEach(t => {
             // INSERT DATE HEADER
             if (t.date !== lastDate) {
-                // Formatting Date -> "Tuesday, Dec 10"
                 const parts = t.date.split('-');
                 const d = new Date(parts[0], parts[1]-1, parts[2]);
                 const niceDate = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -426,7 +413,6 @@
             
             let metaString = t.purpose || "";
             
-            // Percentage Logic
             let percentHtml = "";
             if (totalFunding > 0 && t.type === 'expense' && t.id !== fundingTx?.id) {
                 const pct = (t.amount / totalFunding) * 100;
@@ -482,7 +468,6 @@
         return d.toISOString().slice(0,10);
     }
     
-    // Get Date String from Day Name relative to current week
     window.getDateFromDay = function(dayName) {
         const dayMap = { "Sunday":0, "Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6 };
         const targetDayIndex = dayMap[dayName];
